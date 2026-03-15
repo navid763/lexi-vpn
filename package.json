@@ -1,6 +1,9 @@
 {
-  "name": "node-starter",
-  "private": true,
+  "name": "lexi-vpn",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -9,6 +12,7 @@
     "bcrypt": "^6.0.0",
     "commander": "^14.0.3",
     "cors": "^2.8.6",
+    "crypto": "^1.0.1",
     "dayjs": "^1.11.19",
     "dotenv": "^17.3.1",
     "dotenv-expand": "^12.0.3",
