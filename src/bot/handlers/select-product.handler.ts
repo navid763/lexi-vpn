@@ -1,6 +1,6 @@
 import type { BotAdapter } from "../adapters/bot.adapter.ts";
 import type { BotContext } from "../types/bot.context.ts";
-import { Product } from "../../models/index.ts";
+import { Product, User } from "../../models/index.ts";
 import { parseCallbackData } from "../utils/callback-data.ts";
 import { OrderService } from "../../services/order.service.ts";
 
@@ -22,18 +22,29 @@ export const selectProductHandler = async (ctx: BotContext, adapter: BotAdapter)
         return
     }
 
-    //     const user = await User.findOne({
-    //     where: { chat_id: ctx.chatId },
-    //   });
+    const user = await User.findOne({
+        where: { chat_id: ctx.chatId },
+    });
 
-    const order = await OrderService.createOrder(ctx.chatId, productId);
+    if (!user) {
+        console.log("user not found");
+        return
+    }
+
+    const order = await OrderService.createOrder(user.toJSON().id, productId);
 
     await adapter.sendMessage(ctx.chatId,
         `✅ سفارش ایجاد شد
 
-📦 سرویس: ${product.name}
-💰 مبلغ: ${product.price} تومان
+📦 سرویس: ${product.toJSON().name}
+💰 مبلغ: ${product.toJSON().price} تومان
 
-لطفاً رسید پرداخت را ارسال کنید.`
-    )
+لطفاً رسید پرداخت را حداکثر تا 10 دقیقه ارسال کنید.`
+    );
+
+    await adapter.sendMessage(ctx.chatId,
+        `شماره کارت:
+       1234 **** **** 4321`
+    );
+
 }

@@ -2,8 +2,9 @@ import { BalePollingAdapter } from "./adapters/balePolling.adapter.ts";
 import { BaleAdapter } from "./adapters/bale.adapter.ts";
 import { parseBaleUpdate } from "./utils/parseBaleUpdate.ts";
 
-import { startHandler } from "./handlers/start.handler.ts";
-import { plansHandler } from "./handlers/plans.handler.ts";
+import { commandRouter } from "./routers/command.router.ts";
+import { callbackRouter } from "./routers/callback.router.ts";
+import { messageRouter } from "./routers/message.router.ts";
 
 export const startBot = async () => {
 
@@ -20,18 +21,14 @@ export const startBot = async () => {
 
         if (!ctx) return;
 
-        if (ctx.text === "/start") {
-            await startHandler(ctx, adapter);
-            console.log("started the bot");
-
-        }
-        if (ctx.callbackData === "HOME") {
-            await startHandler(ctx, adapter);
+        if (ctx.text?.startsWith("/")) {
+            return commandRouter(ctx, adapter);
         }
 
-        if (ctx.callbackData === "PLANS") {
-            await plansHandler(ctx, adapter);
+        if (ctx.callbackData) {
+            return callbackRouter(ctx, adapter);
         }
 
+        return messageRouter(ctx, adapter);
     });
 };

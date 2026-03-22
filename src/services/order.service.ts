@@ -13,7 +13,7 @@ export class OrderService {
             user_id: userId,
             product_id: productId,
             status: "pending_payment",
-            price: product?.price
+            price: product.toJSON().price
         });
 
         return order

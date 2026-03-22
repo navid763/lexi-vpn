@@ -24,7 +24,7 @@ export const mainMenuKeyboards = () => {
 export const productsKeyboard = (products: Product[]) => {
     const productButtons = products.map(product => [
         {
-            text: `${product.name} ✅  ${product.price / 10} تومان`,
+            text: `${product.name} ${product.traffic_limit / 1000} گیگ ✅  ${product.price / 10} تومان`,
             callback_data: `BUY:${product.id}`,
         }
     ]);

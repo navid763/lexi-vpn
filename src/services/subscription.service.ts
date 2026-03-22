@@ -13,7 +13,7 @@ export class SubscriptionService {
             throw new Error(`order not found by the following id: ${orderId}`)
         }
 
-        const product = await Product.findByPk(order.product_id, { transaction });
+        const product = await Product.findByPk(order.toJSON().product_id, { transaction });
 
         if (!product) {
             throw new Error("Product not found");
@@ -29,13 +29,13 @@ export class SubscriptionService {
         };
 
         const expireDate = new Date();
-        expireDate.setDate(expireDate.getDate() + product?.duration_days);
+        expireDate.setDate(expireDate.getDate() + product.toJSON().duration_days);
 
         const subscription = await Subscription.create({
-            user_id: order.user_id,
-            order_id: order.id,
-            server_id: server.id,
-            traffic_limit: product?.traffic_limit,
+            user_id: order.toJSON().user_id,
+            order_id: order.toJSON().id,
+            server_id: server.toJSON().id,
+            traffic_limit: product.toJSON().traffic_limit,
             expire_at: expireDate
         }, { transaction });
 

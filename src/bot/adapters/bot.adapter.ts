@@ -8,4 +8,11 @@ export interface BotAdapter {
         text: string,
         options?: SendMessageOptions
     ): Promise<void>;
+
+    sendPhoto(
+        chatId: number,
+        photo: string,
+        caption?: string,
+        options?: SendMessageOptions
+    ): Promise<void>;
 }

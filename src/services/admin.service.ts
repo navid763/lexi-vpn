@@ -1,4 +1,4 @@
-import { sequelize, Order, Payment } from "../models/index.ts";
+import { sequelize, Order, Payment, Subscription, Config } from "../models/index.ts";
 import { SubscriptionService } from "./subscription.service.ts";
 import { ConfigService } from "./config.service.ts";
 
@@ -10,19 +10,31 @@ export class AdminService {
         const transaction = await sequelize.transaction();
 
         try {
-            const order = await Order.findByPk(orderId, { transaction });
-            if (!order) throw new Error("Order not found");
-            if (order.status !== "waiting_approval") throw new Error("Order is not waiting for approval");
+            const order = await Order.findByPk(
+                orderId,
+                {
+                    transaction,
+                    lock: transaction.LOCK.UPDATE
+                }
+            );
 
+            if (!order) throw new Error("Order not found - [services-adminservice-approveOrder]");
+            if (order.toJSON().status !== "waiting_approval") {
+                throw new Error("Order_Already_Processed");
+            }
             const payment = await Payment.findOne({
                 where: { order_id: orderId },
-                transaction
+                transaction,
+                lock: transaction.LOCK.UPDATE
             });
-            if (!payment) throw new Error("Payment not found");
+            if (!payment) throw new Error("Payment not found - [services-adminservice-approveOrder]");
 
-            await payment.update(
+            await Payment.update(
                 { status: "approved" },
-                { transaction }
+                {
+                    where: { id: payment.toJSON().id },
+                    transaction
+                }
             );
 
             await order.update(
@@ -30,18 +42,27 @@ export class AdminService {
                 { transaction }
             );
 
-            const subscription =
-                await SubscriptionService.createSubscription(orderId, transaction);
+            const subscription = await SubscriptionService.createSubscription(orderId, transaction);
 
-            const config =
-                await ConfigService.createConfig(subscription.id, transaction);
+            if (!subscription) throw new Error("subscription not found - [services-adminservice-approveOrder]");
+
+
+            const config = await ConfigService.createConfig(subscription.id, transaction);
+
+            await Order.update(
+                { status: "approved" },
+                {
+                    where: { id: orderId },
+                    transaction
+                }
+            );
 
             await transaction.commit();
 
             return {
-                order,
-                subscription,
-                config
+                order: order.toJSON(),
+                subscription: subscription.toJSON(),
+                config: config?.toJSON()
             };
         } catch (error) {
             transaction.rollback();

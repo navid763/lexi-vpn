@@ -18,10 +18,9 @@ export class PaymentService {
         });
 
         await Order.update(
-            { status: "pending_payment" },
+            { status: "waiting_approval" },
             { where: { id: orderId } }
         );
-
         return payment
     }
 }

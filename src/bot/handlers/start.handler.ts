@@ -14,4 +14,6 @@ export const startHandler = async (ctx: BotContext, adapter: BotAdapter) => {
             reply_markup: mainMenuKeyboards()
         }
     );
+
+
 }

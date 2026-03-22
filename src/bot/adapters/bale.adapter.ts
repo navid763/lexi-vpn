@@ -15,4 +15,26 @@ export class BaleAdapter implements BotAdapter {
             reply_markup: options?.reply_markup
         });
     }
+
+    async sendPhoto(
+        chatId: number,
+        photo: string,
+        caption?: string,
+        options?: SendMessageOptions
+    ): Promise<void> {
+
+        await fetch(`${this.baseUrl}/sendPhoto`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                chat_id: chatId,
+                photo,
+                caption,
+                ...options
+            })
+        });
+    }
+
 }

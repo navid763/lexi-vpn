@@ -19,7 +19,6 @@ const start = async () => {
 
         startBot();
 
-
     } catch (error) {
         console.error("some error eccured:", error);
         process.exit(1);
