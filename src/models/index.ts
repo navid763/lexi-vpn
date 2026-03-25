@@ -81,7 +81,7 @@ export const initModels = async () => {
     });
 
 
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     console.log("✅ All models synced with Database");
 };
 

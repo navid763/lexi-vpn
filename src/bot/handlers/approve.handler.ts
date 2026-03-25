@@ -61,19 +61,33 @@ export const approveOrderHandler = async (ctx: BotContext, adapter: BotAdapter) 
     }
 
     if (action === "REJECT") {
-        await Order.update(
-            { status: "rejected" },
-            { where: { id: orderId } }
-        );
+        try {
 
-        await adapter.sendMessage(
-            ctx.chatId,
-            `❌ سفارش ${orderId} رد شد`
-        );
+            if (order.toJSON().status !== "waiting_approval") {
+                adapter.sendMessage(ctx.chatId, "این سفارش قبلاً تعیین تکلیف شده است.");
+                throw new Error("Order_Already_Processed");
+            }
 
-        await adapter.sendMessage(Number(costumer.toJSON().chat_id),
-            `سفارش شما ${orderId} رد شد
+            await Order.update(
+                { status: "rejected" },
+                { where: { id: orderId } }
+            );
+
+            await adapter.sendMessage(
+                ctx.chatId,
+                `❌ سفارش ${orderId} رد شد`
+            );
+
+            await adapter.sendMessage(Number(costumer.toJSON().chat_id),
+                `سفارش شما ${orderId} رد شد
             `
-        );
+            );
+        } catch (error: any) {
+            console.error("Error approving order:", error);
+            if (error.message !== "Order_Already_Processed") {
+                await adapter.sendMessage(ctx.chatId, "خطایی در لغو سفارش رخ داد.");
+            }
+
+        }
     }
 }

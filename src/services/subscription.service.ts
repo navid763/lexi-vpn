@@ -1,5 +1,6 @@
 import { Subscription, Order, Product, Server } from "../models/index.ts";
 import type { Transaction } from "sequelize";
+import { Op } from "sequelize";
 
 export class SubscriptionService {
     static async createSubscription(orderId: number, transaction?: Transaction) {
@@ -40,5 +41,21 @@ export class SubscriptionService {
         }, { transaction });
 
         return subscription
+    }
+
+    static async getSubscriptions(userId: number, all: boolean = false, limit: number = 10) {
+        const status = all ? ["active", "expired"] : ["active"];
+        const subscriptions = await Subscription.findAll({
+            where:
+            {
+                user_id: userId,
+                status: {
+                    [Op.in]: status
+                }
+            },
+            limit
+        });
+
+        return subscriptions.map(s => s.toJSON())
     }
 }
