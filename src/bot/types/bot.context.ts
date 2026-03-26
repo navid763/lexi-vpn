@@ -5,6 +5,8 @@ export interface BotContext {
     callbackData?: string;
     messenger: "bale" | "telegram";
     messageId?: number;
+    username?: string;
+    fullName?: string;
     photo?: string;
     raw: any;
 }

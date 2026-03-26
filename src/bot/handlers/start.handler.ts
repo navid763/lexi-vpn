@@ -5,11 +5,16 @@ import { mainMenuKeyboards } from "../utils/keyboards.ts";
 
 export const startHandler = async (ctx: BotContext, adapter: BotAdapter) => {
 
-    const user = await UserService.getOrCreateUser(ctx.chatId, ctx.messenger);
+    const user = await UserService.getOrCreateUser(
+        ctx.chatId,
+        ctx.messenger,
+        ctx.fullName,
+        ctx.username
+    );
 
     await adapter.sendMessage(
         ctx.chatId,
-        "welcome to lexi vpn 🚀",
+        "welcome to Lexi 🚀",
         {
             reply_markup: mainMenuKeyboards()
         }
