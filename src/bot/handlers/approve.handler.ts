@@ -51,7 +51,6 @@ export const approveOrderHandler = async (ctx: BotContext, adapter: BotAdapter) 
 
         } catch (error: any) {
             if (error.message === "Order_Already_Processed") {
-                // پیام به ادمینی که دیرتر کلیک کرده یا دوباره کلیک کرده
                 await adapter.sendMessage(ctx.chatId, "این سفارش قبلاً تعیین تکلیف شده است.");
             } else {
                 console.error("Error approving order:", error);

@@ -1,6 +1,7 @@
 import app from "./app.ts"
 import { initModels, sequelize } from "./models/index.ts";
 import { startBot } from "./bot/startBot.ts";
+import "./utils/cron/subscription-expire-check.ts"
 
 const PORT = process.env.PORT || 3000;
 const start = async () => {
@@ -16,7 +17,6 @@ const start = async () => {
         });
 
         startBot();
-
 
     } catch (error) {
         console.error("some error eccured:", error);
