@@ -6,7 +6,7 @@ import { OrderService } from "../../services/order.service.ts";
 
 
 
-export const selectProductHandler = async (ctx: BotContext, adapter: BotAdapter) => {
+export const cardPayHandler = async (ctx: BotContext, adapter: BotAdapter) => {
 
     if (!ctx.callbackData) return;
 

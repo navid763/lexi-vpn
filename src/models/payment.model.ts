@@ -1,14 +1,18 @@
 import { sequelize } from "../config/seqelize.ts";
-import { DataTypes, Model, type Optional } from "sequelize";
+import { DataTypes, Model } from "sequelize";
+import type { Optional, CreationOptional, ForeignKey, InferAttributes, InferCreationAttributes } from "sequelize"
+import { User } from "./user.model.ts";
+import { Order } from "./order.model.ts";
 
 interface PaymentAttributes {
-    id: number;
-    order_id: number;
+    id: CreationOptional<number>;
+    user_id: ForeignKey<User["id"]>;
+    order_id: ForeignKey<Order["id"]> | null;
 
     amount: number;
-    destination_card?: string;
+    type: "order_payment" | "wallet_topup";
     receipt_image?: string;
-
+    destination_card?: string;
     status: "pending" | "approved" | "rejected";
 
     created_at?: Date;
@@ -16,26 +20,30 @@ interface PaymentAttributes {
     deleted_at?: Date;
 }
 
-type PaymentCreationAttributes = Optional<
-    PaymentAttributes,
-    "id" | "destination_card" | "receipt_image" | "status" | "created_at" | "updated_at" | "deleted_at"
->;
+interface PaymentCreationAttributes
+    extends InferCreationAttributes<Payment, { omit: "id" }> { }
 
 export class Payment
-    extends Model<PaymentAttributes, PaymentCreationAttributes>
-    implements PaymentAttributes {
-    public id!: number;
-    public order_id!: number;
+    extends Model<
+        InferAttributes<Payment>,
+        PaymentCreationAttributes
+    > {
+    declare id: CreationOptional<number>;
+    declare user_id: ForeignKey<User["id"]>;
+    declare order_id: ForeignKey<Order["id"]> | null;
 
-    public amount!: number;
-    public destination_card?: string;
-    public receipt_image?: string;
+    declare amount: number;
 
-    public status!: "pending" | "approved" | "rejected";
+    declare type: CreationOptional<"order_payment" | "wallet_topup">;
 
-    public readonly created_at!: Date;
-    public readonly updated_at!: Date;
-    public readonly deleted_at!: Date;
+    declare receipt_image: CreationOptional<string | null>;
+    declare destination_card: CreationOptional<string | null>;
+
+    declare status: CreationOptional<"pending" | "approved" | "rejected">;
+
+    declare readonly created_at: CreationOptional<Date>;
+    declare readonly updated_at: CreationOptional<Date>;
+    declare readonly deleted_at: CreationOptional<Date> | null;
 }
 
 Payment.init(
@@ -45,12 +53,20 @@ Payment.init(
             autoIncrement: true,
             primaryKey: true,
         },
-
-        order_id: {
+        user_id: {
             type: DataTypes.INTEGER.UNSIGNED,
             allowNull: false,
         },
 
+        order_id: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: true,
+        },
+        type: {
+            type: DataTypes.ENUM("order_payment", "wallet_topup"),
+            allowNull: false,
+            defaultValue: "order_payment",
+        },
         amount: {
             type: DataTypes.INTEGER,
             allowNull: false,
@@ -58,10 +74,12 @@ Payment.init(
 
         destination_card: {
             type: DataTypes.STRING,
+            allowNull: true
         },
 
         receipt_image: {
             type: DataTypes.STRING,
+            allowNull: true
         },
 
         status: {

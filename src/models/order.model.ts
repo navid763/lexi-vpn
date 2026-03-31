@@ -1,7 +1,7 @@
 import { sequelize } from "../config/seqelize.ts";
 import { DataTypes, Model, type Optional } from "sequelize";
 
-interface OrderAttributes {
+export interface OrderAttributes {
     id: number;
     user_id: number;
     product_id: number;
@@ -38,24 +38,24 @@ export class Order
     implements OrderAttributes {
 
 
-    public id!: number;
-    public user_id!: number;
-    public product_id!: number;
-    public price!: number;
+    declare id: number;
+    declare user_id: number;
+    declare product_id: number;
+    declare price: number;
 
-    public status!:
+    declare status:
         | "pending_payment"
         | "waiting_approval"
         | "approved"
         | "rejected"
         | "cancelled";
 
-    public receipt_image?: string;
-    public admin_note?: string;
+    declare receipt_image: string;
+    declare admin_note: string;
 
-    public readonly created_at!: Date;
-    public readonly updated_at!: Date;
-    public readonly deleted_at!: Date;
+    declare readonly created_at: Date;
+    declare readonly updated_at: Date;
+    declare readonly deleted_at: Date;
 }
 
 Order.init(

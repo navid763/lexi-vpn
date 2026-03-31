@@ -65,7 +65,7 @@ export class AdminService {
                 config: config?.toJSON()
             };
         } catch (error) {
-            transaction.rollback();
+            await transaction.rollback();
             throw error;
         }
     }

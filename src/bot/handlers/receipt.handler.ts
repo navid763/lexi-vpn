@@ -32,7 +32,8 @@ export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
         return adapter.sendMessage(ctx.chatId, "شما فعلاً سفارشی برای پرداخت ندارید یا زمان پرداخت تمام شده است. لطفا از ابتدا /start کنید.");
     }
 
-    await PaymentService.submitPayment(
+    await PaymentService.submitCardPayment(
+        user.toJSON().id,
         order.toJSON().id,
         1,
         ctx.photo
@@ -40,7 +41,7 @@ export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
 
     await adapter.sendMessage(
         ctx.chatId,
-        "✅ رسید دریافت شد.\n\nپس از بررسی ادمین سرویس فعال می‌شود."
+        "✅ رسید دریافت شد.\n\nپس از بررسی، سرویس فعال میشود و برایتان ارسال می‌گردد."
     );
 
     const order2 = await Order.findOne({
@@ -64,6 +65,8 @@ export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
             `
        سفارش جدید
        شماره سفارش: ${order.toJSON().id}
+       
+       مبلغ سفارش: ${order.toJSON().price}
        کاربر: ${ctx.chatId}
        تایید؟
        `,

@@ -1,7 +1,7 @@
 import { sequelize } from "../config/seqelize.ts";
 import { DataTypes, Model, type Optional } from "sequelize";
 
-interface ConfigAttributes {
+export interface ConfigAttributes {
     id: number;
     subscription_id: number;
 

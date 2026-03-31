@@ -2,7 +2,8 @@ import { Payment, Order } from "../models/index.ts";
 
 export class PaymentService {
 
-    static async submitPayment(
+    static async submitCardPayment(
+        userId: number,
         orderId: number,
         amount: number,
         receiptImage?: string,
@@ -10,10 +11,11 @@ export class PaymentService {
     ) {
 
         const payment = await Payment.create({
+            user_id: userId,
             order_id: orderId,
             amount,
-            receipt_image: receiptImage,
-            destination_card: destination_card,
+            receipt_image: receiptImage || null,
+            destination_card: destination_card || null,
             status: "pending"
         });
 

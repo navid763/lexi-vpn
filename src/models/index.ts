@@ -80,6 +80,20 @@ export const initModels = async () => {
         as: "subscription",
     });
 
+    User.hasMany(Payment, {
+        foreignKey: "user_id",
+        as: "payments",
+    });
+
+    Payment.belongsTo(User, {
+        foreignKey: "user_id",
+        as: "user",
+    });
+
+
+    User.hasMany(User, { as: 'referrals', foreignKey: 'invited_by' });
+    User.belongsTo(User, { as: 'referrer', foreignKey: 'invited_by' });
+
 
     await sequelize.sync();
     console.log("✅ All models synced with Database");
