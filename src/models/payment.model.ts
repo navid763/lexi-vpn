@@ -13,7 +13,7 @@ interface PaymentAttributes {
     type: "order_payment" | "wallet_topup";
     receipt_image?: string;
     destination_card?: string;
-    status: "pending" | "approved" | "rejected";
+    status: "pending" | "approved" | "rejected" | "cancelled";
 
     created_at?: Date;
     updated_at?: Date;
@@ -39,7 +39,7 @@ export class Payment
     declare receipt_image: CreationOptional<string | null>;
     declare destination_card: CreationOptional<string | null>;
 
-    declare status: CreationOptional<"pending" | "approved" | "rejected">;
+    declare status: CreationOptional<"pending" | "approved" | "rejected" | "cancelled">;
 
     declare readonly created_at: CreationOptional<Date>;
     declare readonly updated_at: CreationOptional<Date>;
@@ -83,7 +83,7 @@ Payment.init(
         },
 
         status: {
-            type: DataTypes.ENUM("pending", "approved", "rejected"),
+            type: DataTypes.ENUM("pending", "approved", "rejected", "cancelled"),
             defaultValue: "pending",
         },
 

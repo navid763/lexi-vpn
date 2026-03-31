@@ -12,6 +12,9 @@ import { walletPayHandler } from "../handlers/wallet-pay.handler.ts";
 import { increaseBalanceHandler } from "../handlers/increase-balance.handler.ts";
 import { approveTopupHandler } from "../handlers/approve-walet-topup.handler.ts";
 import { getMyRefCodeHandler } from "../handlers/get-referral-code.handler.ts";
+import { cancellWalletTopUpAmountHandler } from "../handlers/cancel-handlers/cancel-wallet-topup-amount.handler.ts";
+import { cancelCardPayHandler } from "../handlers/cancel-handlers/cancel-card-pay.handler.ts";
+
 
 export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
 
@@ -54,6 +57,13 @@ export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
 
         case "GET_MY_REFERRAL":
             return getMyRefCodeHandler(ctx, adapter);
+
+        case "CANCEL_TOPUP_AMOUNT":
+            return cancellWalletTopUpAmountHandler(ctx, adapter);
+
+        case "CANCEL_CARD_PAY":
+            return cancelCardPayHandler(ctx, adapter);
+
 
         default:
             await adapter.sendMessage(ctx.chatId, "دستور نامعتبر.");

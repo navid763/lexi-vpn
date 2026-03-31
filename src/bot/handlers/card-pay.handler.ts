@@ -44,7 +44,22 @@ export const cardPayHandler = async (ctx: BotContext, adapter: BotAdapter) => {
 
     await adapter.sendMessage(ctx.chatId,
         `شماره کارت:
-       1234 **** **** 4321`
+       1234 **** **** 4321`,
+
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {
+                            text: "لغو عملیات ❌",
+                            callback_data: `CANCEL_CARD_PAY:${order.dataValues.id}`,
+                        }
+                    ]
+                ]
+            }
+        }
     );
+
+
 
 }

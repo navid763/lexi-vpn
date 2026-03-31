@@ -28,7 +28,7 @@ export async function topupAmountHandler(ctx: BotContext, adapter: BotAdapter) {
         }
 
 
-        await Payment.create({
+        const payment = await Payment.create({
             user_id: user.toJSON().id,
             order_id: null,
             amount: (amount * 10), // tooman to rial
@@ -43,7 +43,19 @@ export async function topupAmountHandler(ctx: BotContext, adapter: BotAdapter) {
             ctx.chatId,
             `✅ درخواست افزایش موجودی به مبلغ ${amount.toLocaleString("fa-IR")} تومان ثبت شد.\n\n` +
             `لطفاً مبلغ را به شماره کارت زیر واریز کرده و **عکس رسید** آن را حداکثر تا 10 دقیقه در همینجا ارسال کنید:\n\n` +
-            `💳 ۶۰۳۷-xxxx-xxxx-xxxx\nبه نام ...`
+            `💳 ۶۰۳۷-xxxx-xxxx-xxxx\nبه نام ...`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "لغو عملیات ❌",
+                                callback_data: `CANCEL_TOPUP_AMOUNT:${payment.dataValues.id}`,
+                            }
+                        ]
+                    ]
+                }
+            }
         );
     } catch (err) {
         console.error("Error in topupAmountHandler:", err);

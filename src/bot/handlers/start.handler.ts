@@ -2,8 +2,13 @@ import { UserService } from "../../services/user.service.ts";
 import type { BotContext } from "../types/bot.context.ts";
 import type { BotAdapter } from "../adapters/bot.adapter.ts";
 import { mainMenuKeyboards } from "../utils/keyboards.ts";
+import { userSteps } from "../utils/state.ts";
+
 
 export const startHandler = async (ctx: BotContext, adapter: BotAdapter) => {
+
+    userSteps.delete(String(ctx.chatId)); // delete user's saved states
+
     const messageText = ctx.text || "";
     const payloadText = messageText.split(" ")[1];
 

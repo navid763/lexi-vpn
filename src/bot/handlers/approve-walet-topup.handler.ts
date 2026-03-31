@@ -53,7 +53,7 @@ export const approveTopupHandler = async (ctx: BotContext, adapter: BotAdapter) 
 
             await adapter.sendMessage(
                 ctx.chatId,
-                `✅ درخواست شارژ ${amount.toLocaleString("fa-IR")} تومانی تایید شد و موجودی کاربر افزایش یافت.`
+                `✅ درخواست شارژ ${(amount / 10).toLocaleString("fa-IR")} تومانی تایید شد و موجودی کاربر افزایش یافت.`
             );
 
         } catch (error) {
@@ -79,7 +79,7 @@ export const approveTopupHandler = async (ctx: BotContext, adapter: BotAdapter) 
 
             await adapter.sendMessage(
                 Number(customer.dataValues.chat_id),
-                `❌ درخواست شارژ کیف پول شما به مبلغ ${amount.toLocaleString("fa-IR")} تومان توسط مدیریت رد شد.\n\n` +
+                `❌ درخواست شارژ کیف پول شما به مبلغ ${(amount / 10).toLocaleString("fa-IR")} تومان توسط مدیریت رد شد.\n\n` +
                 `در صورت بروز مشکل یا اشتباه، با پشتیبانی در ارتباط باشید.`
             );
 
