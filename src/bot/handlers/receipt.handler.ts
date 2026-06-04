@@ -1,4 +1,4 @@
-import { Order, User } from "../../models/index.ts";
+import { Order, User, Payment } from "../../models/index.ts";
 import { PaymentService } from "../../services/payment.service.ts";
 import type { BotContext } from "../types/bot.context.ts";
 import type { BotAdapter } from "../adapters/bot.adapter.ts";
@@ -30,6 +30,20 @@ export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
     if (!order) {
 
         return adapter.sendMessage(ctx.chatId, "شما فعلاً سفارشی برای پرداخت ندارید یا زمان پرداخت تمام شده است. لطفا از ابتدا /start کنید.");
+    }
+
+    const existingPayment = await Payment.findOne({
+        where: {
+            order_id: order.dataValues.id,
+            status: ["pending", "approved"]
+        }
+    });
+
+    if (existingPayment) {
+        return adapter.sendMessage(
+            ctx.chatId,
+            "⚠️ رسید شما قبلاً دریافت شده و در حال بررسی است. لطفاً منتظر بمانید."
+        );
     }
 
     await PaymentService.submitCardPayment(

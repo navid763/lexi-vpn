@@ -10,7 +10,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        const user = User.findOne({
+        const user = await User.findOne({
             where: { chat_id: chatId }
         });
 
@@ -18,7 +18,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
             return res.status(404).json({ error: "user not found" });
         }
 
-        (req as any).user = user;
+        (req as any).user = user.dataValues;
 
         next();
 
