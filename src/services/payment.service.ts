@@ -1,28 +1,33 @@
-import { Payment, Order } from "../models/index.ts";
+import { prisma } from "../config/prisma.ts";
 
 export class PaymentService {
-
     static async submitCardPayment(
         userId: number,
         orderId: number,
         amount: number,
         receiptImage?: string,
-        destination_card?: string
+        destinationCard?: string
     ) {
+        // Run both writes atomically: if the order status update fails we don't
+        // want a dangling Payment row left in a pending state, and vice versa.
+        const [payment] = await prisma.$transaction([
+            prisma.payment.create({
+                data: {
+                    userId,
+                    orderId,
+                    amount,
+                    receiptImage: receiptImage ?? null,
+                    destinationCard: destinationCard ?? null,
+                    status: "PENDING",
+                    type: "ORDER_PAYMENT",
+                },
+            }),
+            prisma.order.update({
+                where: { id: orderId },
+                data: { status: "WAITING_APPROVAL" },
+            }),
+        ]);
 
-        const payment = await Payment.create({
-            user_id: userId,
-            order_id: orderId,
-            amount,
-            receipt_image: receiptImage || null,
-            destination_card: destination_card || null,
-            status: "pending"
-        });
-
-        await Order.update(
-            { status: "waiting_approval" },
-            { where: { id: orderId } }
-        );
-        return payment
+        return payment;
     }
 }

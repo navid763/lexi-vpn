@@ -1,15 +1,15 @@
-import app from "./app.ts"
-import { initModels, sequelize } from "./models/index.ts";
+import app from "./app.ts";
+import { prisma } from "./config/prisma.ts";
 import { startBot } from "./bot/startBot.ts";
-import "./utils/cron/subscription-expire-check.ts"
+import "./utils/cron/subscription-expire-check.ts";
 
 const PORT = process.env.PORT || 3000;
+
 const start = async () => {
     try {
-        await sequelize.authenticate();
-        console.log("Database connected");
-
-        await initModels();
+        // Verify the database connection is alive before accepting traffic.
+        await prisma.$connect();
+        console.log("✅ Database connected");
 
 
         app.listen(PORT, () => {
@@ -17,11 +17,12 @@ const start = async () => {
         });
 
         startBot();
-
     } catch (error) {
-        console.error("some error eccured:", error);
+        console.error("Startup error:", error);
+        // Cleanly close the Prisma connection pool before exiting.
+        await prisma.$disconnect();
         process.exit(1);
     }
-}
+};
 
 start();

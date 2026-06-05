@@ -1,21 +1,22 @@
-import { Order, Product } from "../models/index.ts";
+import { prisma } from "../config/prisma.ts";
 
 export class OrderService {
-
     static async createOrder(userId: number, productId: number) {
-        const product = await Product.findByPk(productId);
-
-        if (!product) {
-            throw new Error("Product not found");
-        }
-
-        const order = await Order.create({
-            user_id: userId,
-            product_id: productId,
-            status: "pending_payment",
-            price: product.toJSON().price
+        // findUniqueOrThrow is Prisma's cleaner alternative to manually checking
+        // for null — it throws a PrismaClientKnownRequestError if not found.
+        const product = await prisma.product.findUniqueOrThrow({
+            where: { id: productId },
         });
 
-        return order
+        const order = await prisma.order.create({
+            data: {
+                userId,
+                productId,
+                status: "PENDING_PAYMENT",
+                price: product.price,
+            },
+        });
+
+        return order;
     }
 }

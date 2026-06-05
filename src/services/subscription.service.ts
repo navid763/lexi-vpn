@@ -1,61 +1,63 @@
-import { Subscription, Order, Product, Server } from "../models/index.ts";
-import type { Transaction } from "sequelize";
-import { Op } from "sequelize";
+import { prisma } from "../config/prisma.ts";
+import type { Prisma } from "@prisma/client";
 
 export class SubscriptionService {
-    static async createSubscription(orderId: number, transaction?: Transaction) {
+    static async createSubscription(
+        orderId: number,
 
-        const order = await Order.findByPk(orderId, {
-            include: ["product", "user"],
-            transaction
+        tx?: Prisma.TransactionClient
+    ) {
+
+        const db = tx ?? prisma;
+
+        const order = await db.order.findUniqueOrThrow({
+            where: { id: orderId },
+            include: { product: true, user: true },
         });
 
-        if (!order) {
-            throw new Error(`order not found by the following id: ${orderId}`)
-        }
-
-        const product = await Product.findByPk(order.toJSON().product_id, { transaction });
-
-        if (!product) {
-            throw new Error("Product not found");
-        }
-
-        const server = await Server.findOne({
-            where: { is_active: true },
-            transaction
+        const server = await db.server.findFirst({
+            where: { isActive: true },
         });
 
         if (!server) {
-            throw new Error("No active server");
-        };
+            throw new Error("No active server available");
+        }
 
-        const expireDate = new Date();
-        expireDate.setDate(expireDate.getDate() + product.toJSON().duration_days);
+        const expireAt = new Date();
+        expireAt.setDate(expireAt.getDate() + order.product.durationDays);
 
-        const subscription = await Subscription.create({
-            user_id: order.toJSON().user_id,
-            order_id: order.toJSON().id,
-            server_id: server.toJSON().id,
-            traffic_limit: product.toJSON().traffic_limit,
-            expire_at: expireDate
-        }, { transaction });
-
-        return subscription
-    }
-
-    static async getSubscriptions(userId: number, all: boolean = false, limit: number = 10) {
-        const status = all ? ["active", "expired"] : ["active"];
-        const subscriptions = await Subscription.findAll({
-            where:
-            {
-                user_id: userId,
-                status: {
-                    [Op.in]: status
-                }
+        const subscription = await db.subscription.create({
+            data: {
+                userId: order.userId,
+                orderId: order.id,
+                serverId: server.id,
+                trafficLimit: order.product.trafficLimit,
+                expireAt,
+                status: "ACTIVE",
             },
-            limit
         });
 
-        return subscriptions.map(s => s.toJSON())
+        return subscription;
+    }
+
+    static async getSubscriptions(
+        userId: number,
+        all: boolean = false,
+        limit: number = 10
+    ) {
+        const statusFilter = all
+            ? { in: ["ACTIVE", "EXPIRED"] as const }
+            : { equals: "ACTIVE" as const };
+
+        const subscriptions = await prisma.subscription.findMany({
+            where: {
+                userId,
+                status: statusFilter,
+                deletedAt: null,
+            },
+            take: limit,
+        });
+
+        return subscriptions;
     }
 }

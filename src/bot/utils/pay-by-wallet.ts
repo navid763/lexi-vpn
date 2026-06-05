@@ -1,135 +1,138 @@
 import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import { sequelize, Payment, Product, User, Order } from "../../models/index.ts";
+import { prisma } from "../../config/prisma.ts";
 import { ConfigService } from "../../services/config.service.ts";
 import { SubscriptionService } from "../../services/subscription.service.ts";
-import type { OrderAttributes } from "../../models/order.model.ts"
-import type { SubscriptionAttributes } from "../../models/subscription.model.ts";
-import type { ConfigAttributes } from "../../models/config.model.ts";
+import type { Config, Order, Subscription } from "@prisma/client";
 
 interface ApproveSuccessResult {
-    order: OrderAttributes;
-    subscription: SubscriptionAttributes;
-    config: ConfigAttributes;
+    order: Order;
+    subscription: Subscription;
+    config: Config;
 }
 
 type ApproveOrderResponse =
     | { success: true; result: ApproveSuccessResult }
-    | { success: false; reason: "insufficient_balance_[approveOrderByWallet]" | "order_not_found_[approveOrderByWallet]" | "user_not_found_[approveOrderByWallet]" };
+    | {
+        success: false;
+        reason:
+        | "insufficient_balance_[approveOrderByWallet]"
+        | "order_not_found_[approveOrderByWallet]"
+        | "user_not_found_[approveOrderByWallet]";
+    };
 
-export const approveOrderByWallet = async (orderId: number, chatId: number, adapter: BotAdapter): Promise<ApproveOrderResponse> => {
+export const approveOrderByWallet = async (
+    orderId: number,
+    chatId: number,
+    adapter: BotAdapter
+): Promise<ApproveOrderResponse> => {
+    // Quick pre-checks outside the transaction so we can return early without
+    // opening a transaction unnecessarily.
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) {
+        return { success: false, reason: "order_not_found_[approveOrderByWallet]" };
+    }
 
+    const user = await prisma.user.findUnique({
+        where: { chatId: String(chatId) },
+    });
+    if (!user) {
+        return { success: false, reason: "user_not_found_[approveOrderByWallet]" };
+    }
 
-    const transaction = await sequelize.transaction();
-
-    try {
-        const order = await Order.findByPk(
-            orderId,
+    // Check balance before opening a transaction. This is an optimistic check —
+    // the authoritative check happens inside the transaction below.
+    if (order.price > user.balance) {
+        await adapter.sendMessage(
+            chatId,
+            `❌ موجودی کیف پول شما برای خرید این سرویس کافی نیست.\n\nبرای ادامه، کیف پول خود را شارژ کنید.`,
             {
-                transaction,
-                lock: transaction.LOCK.UPDATE
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: "افزایش اعتبار", callback_data: "INNCREASE_BALANCE" }],
+                    ],
+                },
             }
         );
 
-        if (!order) {
-            await transaction.rollback();
-            return { success: false, reason: "order_not_found_[approveOrderByWallet]" };
-        }
-
-        const user = await User.findOne({
-            where: { chat_id: String(chatId) },
-            transaction: transaction,
-            lock: transaction.LOCK.UPDATE
+        // Mark the order as rejected in a simple (non-transactional) update.
+        await prisma.order.update({
+            where: { id: orderId },
+            data: { status: "REJECTED" },
         });
 
-        if (!user) {
-            await transaction.rollback();
-            return { success: false, reason: "user_not_found_[approveOrderByWallet]" };
-        }
+        return {
+            success: false,
+            reason: "insufficient_balance_[approveOrderByWallet]",
+        };
+    }
 
+    // Everything looks good — execute the financial operations atomically.
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            // Decrement balance. Prisma's `decrement` generates an atomic
+            // UPDATE users SET balance = balance - ? WHERE id = ?
+            // so there's no race condition between reading and writing.
+            const updatedUser = await tx.user.update({
+                where: { id: user.id },
+                data: { balance: { decrement: order.price } },
+            });
 
-        if (order.toJSON().price > user.toJSON().balance) {
-            await adapter.sendMessage(chatId,
-                `❌ موجودی کیف پول شما برای خرید این سرویس کافی نیست.
+            // Double-check the balance didn't go negative due to a concurrent
+            // transaction (e.g. two simultaneous purchases).
+            if (updatedUser.balance < 0) {
+                // Throwing inside $transaction triggers automatic rollback.
+                throw new Error("CONCURRENT_BALANCE_UNDERFLOW");
+            }
 
-برای ادامه، کیف پول خود را شارژ کنید.
-`,
+            await tx.order.update({
+                where: { id: orderId },
+                data: { status: "PENDING_PAYMENT" },
+            });
+
+            await tx.payment.create({
+                data: {
+                    userId: user.id,
+                    orderId,
+                    amount: order.price,
+                    status: "APPROVED",
+                    type: "ORDER_PAYMENT",
+                },
+            });
+
+            const subscription = await SubscriptionService.createSubscription(
+                orderId,
+                tx
+            );
+            const config = await ConfigService.createConfig(subscription.id, tx);
+
+            await tx.order.update({
+                where: { id: orderId },
+                data: { status: "APPROVED" },
+            });
+
+            return { order, subscription, config };
+        });
+
+        return { success: true, result };
+    } catch (error: any) {
+        if (error.message === "CONCURRENT_BALANCE_UNDERFLOW") {
+            await adapter.sendMessage(
+                chatId,
+                `❌ موجودی کیف پول شما برای خرید این سرویس کافی نیست.\n\nبرای ادامه، کیف پول خود را شارژ کنید.`,
                 {
                     reply_markup: {
                         inline_keyboard: [
-                            [
-                                {
-                                    text: "افزایش اعتبار",
-                                    callback_data: "INNCREASE_BALANCE",
-                                },
-                            ]
-                        ]
-                    }
+                            [{ text: "افزایش اعتبار", callback_data: "INNCREASE_BALANCE" }],
+                        ],
+                    },
                 }
             );
-            await Order.update(
-                { status: "rejected" },
-                {
-                    where: { id: orderId },
-                    transaction
-                }
-            );
-
-            await transaction.commit();
-
-            return { success: false, reason: "insufficient_balance_[approveOrderByWallet]" };
+            return {
+                success: false,
+                reason: "insufficient_balance_[approveOrderByWallet]",
+            };
         }
-
-        await User.decrement("balance", {
-            by: order.toJSON().price,
-            where: { id: user.toJSON().id },
-            transaction
-        });
-
-        await Order.update(
-            { status: "pending_payment" },
-            {
-                where: { id: orderId },
-                transaction
-            }
-        );
-
-        const payment = await Payment.create({
-            user_id: user.toJSON().id,
-            order_id: orderId,
-            amount: order.toJSON().price,
-            status: "approved",
-            type: "order_payment"
-        }, { transaction }
-        );
-
-
-        const subscription = await SubscriptionService.createSubscription(orderId, transaction);
-
-        if (!subscription) throw new Error("subscription not found - [approveOrderByWallet]");
-
-
-        const config = await ConfigService.createConfig(subscription.id, transaction);
-
-        await Order.update(
-            { status: "approved" },
-            {
-                where: { id: orderId },
-                transaction
-            }
-        );
-
-        await transaction.commit();
-
-        return {
-            success: true,
-            result: {
-                order: order.toJSON(),
-                subscription: subscription.toJSON(),
-                config: config?.toJSON(),
-            }
-        };
-    } catch (error) {
-        await transaction.rollback();
+        // Re-throw unexpected errors so the caller can handle them.
         throw error;
     }
-}
+};

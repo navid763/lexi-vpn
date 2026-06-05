@@ -1,42 +1,44 @@
-import { Order, User, Payment } from "../../models/index.ts";
+import { prisma } from "../../config/prisma.ts";
 import { PaymentService } from "../../services/payment.service.ts";
 import type { BotContext } from "../types/bot.context.ts";
 import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import { Op } from "sequelize";
 
 const ADMIN_CHAT_ID = Number(process.env.ADMIN_CHAT_ID);
 
 export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
-    const user = await User.findOne({
-        where: { chat_id: ctx.chatId }
+    const user = await prisma.user.findUnique({
+        where: { chatId: String(ctx.chatId) },
     });
-
     if (!user) {
         console.log("user not found");
-        return
+        return;
     }
 
-    const order = await Order.findOne({
+    // Find a pending_payment order created in the last 10 minutes.
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+
+    const order = await prisma.order.findFirst({
         where: {
-            user_id: user.toJSON().id,
-            status: "pending_payment",
-            created_at: {
-                [Op.gte]: Date.now() - 10 * 60 * 1000  // ۱۰ دقیقه اخیر
-            }
-        }
+            userId: user.id,
+            status: "PENDING_PAYMENT",
+            createdAt: { gte: tenMinutesAgo },
+            deletedAt: null,
+        },
     });
 
-
     if (!order) {
-
-        return adapter.sendMessage(ctx.chatId, "شما فعلاً سفارشی برای پرداخت ندارید یا زمان پرداخت تمام شده است. لطفا از ابتدا /start کنید.");
+        return adapter.sendMessage(
+            ctx.chatId,
+            "شما فعلاً سفارشی برای پرداخت ندارید یا زمان پرداخت تمام شده است. لطفا از ابتدا /start کنید."
+        );
     }
 
-    const existingPayment = await Payment.findOne({
+    // Guard against duplicate receipt submissions for the same order.
+    const existingPayment = await prisma.payment.findFirst({
         where: {
-            order_id: order.dataValues.id,
-            status: ["pending", "approved"]
-        }
+            orderId: order.id,
+            status: { in: ["PENDING", "APPROVED"] },
+        },
     });
 
     if (existingPayment) {
@@ -47,9 +49,9 @@ export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
     }
 
     await PaymentService.submitCardPayment(
-        user.toJSON().id,
-        order.toJSON().id,
-        1,
+        user.id,
+        order.id,
+        1, // placeholder amount; real amount is on the order
         ctx.photo
     );
 
@@ -58,49 +60,26 @@ export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
         "✅ رسید دریافت شد.\n\nپس از بررسی، سرویس فعال میشود و برایتان ارسال می‌گردد."
     );
 
-    const order2 = await Order.findOne({
-        where: {
-            user_id: user.toJSON().id,
-            status: "waiting_approval",
-        }
-    });
-
-    // send receipt to admin
     if (!ADMIN_CHAT_ID) {
-        console.error("admin id is not valid");
-        return
+        console.error("ADMIN_CHAT_ID is not set");
+        return;
     }
-
 
     if (ctx.photo) {
         await adapter.sendPhoto(
             ADMIN_CHAT_ID,
             ctx.photo,
-            `
-       سفارش جدید
-       شماره سفارش: ${order.toJSON().id}
-       
-       مبلغ سفارش: ${order.toJSON().price}
-       کاربر: ${ctx.chatId}
-       تایید؟
-       `,
+            `سفارش جدید\nشماره سفارش: ${order.id}\n\nمبلغ سفارش: ${order.price}\nکاربر: ${ctx.chatId}\nتایید؟`,
             {
                 reply_markup: {
                     inline_keyboard: [
                         [
-                            {
-                                text: "✅ تایید",
-                                callback_data: `APPROVE:${order.toJSON().id}`
-                            },
-                            {
-                                text: "❌ رد",
-                                callback_data: `REJECT:${order.toJSON().id}`
-                            }
-                        ]
-                    ]
-                }
+                            { text: "✅ تایید", callback_data: `APPROVE:${order.id}` },
+                            { text: "❌ رد", callback_data: `REJECT:${order.id}` },
+                        ],
+                    ],
+                },
             }
-
         );
     }
 }

@@ -1,65 +1,76 @@
-import { where } from "sequelize";
-import { User } from "../models/index.ts";
-import * as crypto from 'crypto';
+import { prisma } from "../config/prisma.ts";
+import * as crypto from "crypto";
 
 function generateUniqueCode(): string {
-    return crypto.randomBytes(4).toString('hex').toUpperCase();
+    return crypto.randomBytes(4).toString("hex").toUpperCase();
 }
 
-const REWARD = Number(process.env.REFFERAL_REWARD) || 0; // rial
+const REWARD = Number(process.env.REFFERAL_REWARD) || 0; // Rials
 
 export class UserService {
     static async getOrCreateUser(
         chatId: number,
         messenger: "telegram" | "bale",
-        fullName?: string | undefined,
-        username?: string | undefined,
+        fullName?: string,
+        username?: string,
         referralPayload?: string
     ) {
-        let user = await User.findOne({
-            where: {
-                chat_id: String(chatId),
-            },
-        });
 
+        let user = await prisma.user.findUnique({
+            where: { chatId: String(chatId) },
+        });
 
         let rewardOptions = null;
 
         if (!user) {
-            let invitedById: number | undefined = undefined;
+
+            let invitedById: number | undefined;
+
             if (referralPayload) {
-                const referrer = await User.findOne({
-                    where: { referral_code: referralPayload }
+                const referrer = await prisma.user.findUnique({
+                    where: { referralCode: referralPayload },
                 });
 
                 if (referrer) {
-                    invitedById = referrer.toJSON().id;
-                    await referrer.increment("balance", { by: REWARD });
+                    invitedById = referrer.id;
+
+
+                    await prisma.user.update({
+                        where: { id: referrer.id },
+                        data: { balance: { increment: REWARD } },
+                    });
 
                     rewardOptions = {
-                        rewardOwnerChatId: referrer.toJSON().chat_id,
-                        reward: REWARD
-                    }
+                        rewardOwnerChatId: referrer.chatId,
+                        reward: REWARD,
+                    };
                 }
             }
-            const newReferralCode = `REF-${generateUniqueCode()}`;
-            user = await User.create({
-                chat_id: String(chatId),
-                messenger_type: messenger,
-                full_name: fullName,
-                username,
-                referral_code: newReferralCode,
-                balance: 0,
-                invited_by: invitedById || null
 
+            const newReferralCode = `REF-${generateUniqueCode()}`;
+
+            user = await prisma.user.create({
+                data: {
+                    chatId: String(chatId),
+                    messengerType: messenger,
+                    fullName,
+                    username,
+                    referralCode: newReferralCode,
+                    balance: 0,
+                    invitedById: invitedById ?? null,
+                },
             });
         } else {
 
-            if (user.toJSON().full_name !== fullName) {
-                await user.update({ full_name: fullName });
-            }
-            if (user.toJSON().username !== username) {
-                await user.update({ username: username });
+            const updates: Record<string, string | undefined> = {};
+            if (user.fullName !== fullName) updates.fullName = fullName;
+            if (user.username !== username) updates.username = username;
+
+            if (Object.keys(updates).length > 0) {
+                user = await prisma.user.update({
+                    where: { id: user.id },
+                    data: updates,
+                });
             }
         }
 
