@@ -12,7 +12,7 @@ export const startHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     const messageText = ctx.text || "";
     const payloadText = messageText.split(" ")[1];
 
-    const user = await UserService.getOrCreateUser(
+    const { user, rewardOptions } = await UserService.getOrCreateUser(
         ctx.chatId,
         ctx.messenger,
         ctx.fullName,
@@ -29,8 +29,8 @@ export const startHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     );
 
 
-    if (user.rewardOptions) {
-        const { rewardOwnerChatId, reward } = user.rewardOptions;
+    if (rewardOptions) {
+        const { rewardOwnerChatId, reward } = rewardOptions;
         await adapter.sendMessage(
             Number(rewardOwnerChatId),
             `کاربر " ${ctx.fullName || ""} " با لینک شما ثبتنام کرد و ${reward / 10} تومان به اعتبار شما افزوده شد!

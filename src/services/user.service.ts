@@ -15,7 +15,6 @@ export class UserService {
         username?: string,
         referralPayload?: string
     ) {
-
         let user = await prisma.user.findUnique({
             where: { chatId: String(chatId) },
         });
@@ -23,45 +22,51 @@ export class UserService {
         let rewardOptions = null;
 
         if (!user) {
-
-            let invitedById: number | undefined;
-
-            if (referralPayload) {
-                const referrer = await prisma.user.findUnique({
-                    where: { referralCode: referralPayload },
-                });
-
-                if (referrer) {
-                    invitedById = referrer.id;
-
-
-                    await prisma.user.update({
-                        where: { id: referrer.id },
-                        data: { balance: { increment: REWARD } },
-                    });
-
-                    rewardOptions = {
-                        rewardOwnerChatId: referrer.chatId,
-                        reward: REWARD,
-                    };
-                }
-            }
-
             const newReferralCode = `REF-${generateUniqueCode()}`;
 
-            user = await prisma.user.create({
-                data: {
-                    chatId: String(chatId),
-                    messengerType: messenger,
-                    fullName,
-                    username,
-                    referralCode: newReferralCode,
-                    balance: 0,
-                    invitedById: invitedById ?? null,
-                },
-            });
-        } else {
+            const result = await prisma.$transaction(async (tx) => {
+                let invitedById: number | undefined;
+                let rewardInfo: { rewardOwnerChatId: string; reward: number } | null = null;
 
+                if (referralPayload) {
+                    const referrer = await tx.user.findUnique({
+                        where: { referralCode: referralPayload },
+                    });
+
+                    if (referrer) {
+                        invitedById = referrer.id;
+
+                        await tx.user.update({
+                            where: { id: referrer.id },
+                            data: { balance: { increment: REWARD } },
+                        });
+
+                        rewardInfo = {
+                            rewardOwnerChatId: referrer.chatId,
+                            reward: REWARD,
+                        };
+                    }
+                }
+
+                const newUser = await tx.user.create({
+                    data: {
+                        chatId: String(chatId),
+                        messengerType: messenger,
+                        fullName,
+                        username,
+                        referralCode: newReferralCode,
+                        balance: 0,
+                        invitedById: invitedById ?? null,
+                    },
+                });
+
+                return { newUser, rewardInfo };
+            });
+
+            user = result.newUser;
+            rewardOptions = result.rewardInfo;
+        } else {
+            // Existing user: sync profile fields if they changed.
             const updates: Record<string, string | undefined> = {};
             if (user.fullName !== fullName) updates.fullName = fullName;
             if (user.username !== username) updates.username = username;

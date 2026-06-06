@@ -13,14 +13,30 @@ export const cancelCardPayHandler = async (
         const { id: orderId } = parseCallbackData(ctx.callbackData);
         if (!orderId) throw new Error("order id not found in the callback data");
 
-        // Verify the order exists before attempting the update.
-        const order = await prisma.order.findUnique({ where: { id: orderId } });
-        if (!order) throw new Error("order not found");
-
-        await prisma.order.update({
-            where: { id: orderId },
+        // FIX: only cancel orders that are still in a cancellable state.
+        // PENDING_PAYMENT and WAITING_APPROVAL can be cancelled by the user.
+        // APPROVED / REJECTED orders must not be overwritten.
+        const { count } = await prisma.order.updateMany({
+            where: {
+                id: orderId,
+                status: { in: ["PENDING_PAYMENT", "WAITING_APPROVAL"] },
+            },
             data: { status: "CANCELLED" },
         });
+
+        if (count === 0) {
+            return adapter.sendMessage(
+                ctx.chatId,
+                `⚠️ این سفارش قبلاً پردازش شده و قابل لغو نیست.`,
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: "بازگشت به خانه", callback_data: "HOME" }],
+                        ],
+                    },
+                }
+            );
+        }
 
         adapter.sendMessage(ctx.chatId, `سفارش شما لغو شد❌`, {
             reply_markup: {

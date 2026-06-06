@@ -42,7 +42,7 @@ export async function topupAmountHandler(ctx: BotContext, adapter: BotAdapter) {
         return adapter.sendMessage(
             ctx.chatId,
             `✅ درخواست افزایش موجودی به مبلغ ${amount.toLocaleString("fa-IR")} تومان ثبت شد.\n\n` +
-            `لطفاً مبلغ را به شماره کارت زیر واریز کرده و **عکس رسید** آن را حداکثر تا 10 دقیقه در همینجا ارسال کنید:\n\n` +
+            `لطفاً مبلغ را به شماره کارت زیر واریز کرده و <b>عکس رسید</b> آن را حداکثر تا 10 دقیقه در همینجا ارسال کنید:\n\n` +
             `💳 ۶۰۳۷-xxxx-xxxx-xxxx\nبه نام ...`,
             {
                 reply_markup: {

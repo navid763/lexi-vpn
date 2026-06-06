@@ -36,12 +36,12 @@ cron.schedule("0 * * * *", async () => {
             } else if (hoursRemaining === 48) {
                 await adapter.sendMessage(
                     Number(chatId),
-                    `⚠️ کاربر گرامی، تنها **2 روز** تا پایان اشتراک شما باقیمانده است.`
+                    `⚠️ کاربر گرامی، تنها <b>2 روز</b> تا پایان اشتراک شما باقیمانده است.`
                 );
             } else if (hoursRemaining === 168) {
                 await adapter.sendMessage(
                     Number(chatId),
-                    `ℹ️ کاربر گرامی، **7 روز** تا پایان اشتراک شما زمان باقیمانده است.`
+                    `ℹ️ کاربر گرامی، <b>7 روز</b> تا پایان اشتراک شما زمان باقیمانده است.`
                 );
             }
         }

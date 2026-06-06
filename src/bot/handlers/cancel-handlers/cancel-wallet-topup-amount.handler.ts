@@ -16,14 +16,28 @@ export const cancellWalletTopUpAmountHandler = async (
         const { id: paymentId } = parseCallbackData(ctx.callbackData);
         if (!paymentId) throw new Error("payment id not found in the callback data");
 
-        // findUnique first so we know the record actually exists before updating.
-        const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
-        if (!payment) throw new Error("payment not found");
-
-        await prisma.payment.update({
-            where: { id: paymentId },
+        // FIX: use updateMany with a status guard so we only cancel PENDING payments.
+        // If the admin already approved/rejected it while the user was reading the
+        // message, we don't overwrite that decision.
+        const { count } = await prisma.payment.updateMany({
+            where: { id: paymentId, status: "PENDING" },
             data: { status: "CANCELLED" },
         });
+
+        if (count === 0) {
+            // Payment was already processed — inform the user rather than silently failing.
+            return adapter.sendMessage(
+                ctx.chatId,
+                `⚠️ این عملیات قبلاً پردازش شده است.`,
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: "بازگشت به خانه", callback_data: "HOME" }],
+                        ],
+                    },
+                }
+            );
+        }
 
         adapter.sendMessage(ctx.chatId, `عملیات پرداخت شما لغو شد❌`, {
             reply_markup: {

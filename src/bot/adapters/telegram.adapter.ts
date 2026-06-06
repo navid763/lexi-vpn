@@ -14,7 +14,7 @@ export class TelegramAdapter implements BotAdapter {
             chat_id: chatId,
             text,
             // parse_mode lets you use **bold** and other markdown in messages
-            parse_mode: "MarkdownV2",
+            parse_mode: "HTML",
             reply_markup: options?.reply_markup
         });
     }
@@ -30,7 +30,7 @@ export class TelegramAdapter implements BotAdapter {
             chat_id: chatId,
             photo,
             caption,
-            parse_mode: "MarkdownV2",
+            parse_mode: "HTML",
             ...options
         });
     }

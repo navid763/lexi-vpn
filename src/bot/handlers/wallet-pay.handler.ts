@@ -44,6 +44,13 @@ export const walletPayHandler = async (ctx: BotContext, adapter: BotAdapter) => 
 
         if (!response.success) {
             if (response.reason === "insufficient_balance_[approveOrderByWallet]") {
+
+                await prisma.order.update({
+                    where: { id: order.id },
+                    data: { status: "CANCELLED" },
+                }).catch((e) => console.error("Failed to cancel dangling order:", e));
+
+                await adapter.sendMessage(ctx.chatId, "اعتبار کیف پول شما کافی نیست \n اعتبار کیف پولتان را افزایش دهید");
                 console.log("Order rejected due to low balance.");
             } else {
                 console.error(`Business Logic Error: ${response.reason}`);
@@ -71,10 +78,19 @@ export const walletPayHandler = async (ctx: BotContext, adapter: BotAdapter) => 
             `تشکر از حسن اعتماد شما.\nدر صورت بروز هر گونه مشکل با پشتیبانی تماس بگیرید`
         );
     } catch (error: any) {
+
+        await prisma.order.update({
+            where: { id: order.id },
+            data: { status: "CANCELLED" },
+        }).catch((e) => console.error("Failed to cancel order after critical error:", e));
+
         console.error("Critical Error approving order:", error);
-        await adapter.sendMessage(
-            Number(ADMIN_CHAT_ID),
-            `❌ خطا در سیستم حین تایید سفارش\n\nOrder: ${order.id}\nUser: ${ctx.chatId}`
-        );
+
+        if (ADMIN_CHAT_ID) {
+            await adapter.sendMessage(
+                Number(ADMIN_CHAT_ID),
+                `❌ خطا در سیستم حین تایید سفارش\n\nOrder: ${order.id}\nUser: ${ctx.chatId}`
+            );
+        }
     }
 };

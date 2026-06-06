@@ -25,8 +25,6 @@ export const approveOrderByWallet = async (
     chatId: number,
     adapter: BotAdapter
 ): Promise<ApproveOrderResponse> => {
-    // Quick pre-checks outside the transaction so we can return early without
-    // opening a transaction unnecessarily.
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {
         return { success: false, reason: "order_not_found_[approveOrderByWallet]" };
@@ -39,8 +37,7 @@ export const approveOrderByWallet = async (
         return { success: false, reason: "user_not_found_[approveOrderByWallet]" };
     }
 
-    // Check balance before opening a transaction. This is an optimistic check —
-    // the authoritative check happens inside the transaction below.
+    // Optimistic pre-check before opening a transaction.
     if (order.price > user.balance) {
         await adapter.sendMessage(
             chatId,
@@ -54,10 +51,11 @@ export const approveOrderByWallet = async (
             }
         );
 
-        // Mark the order as rejected in a simple (non-transactional) update.
+        // FIX: use CANCELLED (not REJECTED) — REJECTED implies admin decision;
+        // this is a user-side balance failure before any admin involvement.
         await prisma.order.update({
             where: { id: orderId },
-            data: { status: "REJECTED" },
+            data: { status: "CANCELLED" },
         });
 
         return {
@@ -66,29 +64,21 @@ export const approveOrderByWallet = async (
         };
     }
 
-    // Everything looks good — execute the financial operations atomically.
     try {
         const result = await prisma.$transaction(async (tx) => {
-            // Decrement balance. Prisma's `decrement` generates an atomic
-            // UPDATE users SET balance = balance - ? WHERE id = ?
-            // so there's no race condition between reading and writing.
             const updatedUser = await tx.user.update({
                 where: { id: user.id },
                 data: { balance: { decrement: order.price } },
             });
 
-            // Double-check the balance didn't go negative due to a concurrent
-            // transaction (e.g. two simultaneous purchases).
+            // Authoritative balance check inside the transaction.
             if (updatedUser.balance < 0) {
-                // Throwing inside $transaction triggers automatic rollback.
                 throw new Error("CONCURRENT_BALANCE_UNDERFLOW");
             }
 
-            await tx.order.update({
-                where: { id: orderId },
-                data: { status: "PENDING_PAYMENT" },
-            });
-
+            // FIX: removed the redundant intermediate update to PENDING_PAYMENT
+            // (the order is already PENDING_PAYMENT when it arrives here).
+            // Go straight to creating the payment record.
             await tx.payment.create({
                 data: {
                     userId: user.id,
@@ -99,10 +89,7 @@ export const approveOrderByWallet = async (
                 },
             });
 
-            const subscription = await SubscriptionService.createSubscription(
-                orderId,
-                tx
-            );
+            const subscription = await SubscriptionService.createSubscription(orderId, tx);
             const config = await ConfigService.createConfig(subscription.id, tx);
 
             await tx.order.update({
@@ -127,12 +114,17 @@ export const approveOrderByWallet = async (
                     },
                 }
             );
+
+            await prisma.order.update({
+                where: { id: orderId },
+                data: { status: "CANCELLED" },
+            }).catch(() => { });
+
             return {
                 success: false,
                 reason: "insufficient_balance_[approveOrderByWallet]",
             };
         }
-        // Re-throw unexpected errors so the caller can handle them.
         throw error;
     }
 };
