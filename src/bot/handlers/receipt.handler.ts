@@ -14,7 +14,6 @@ export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
         return;
     }
 
-    // Find a pending_payment order created in the last 10 minutes.
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
     const order = await prisma.order.findFirst({
@@ -33,7 +32,6 @@ export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
         );
     }
 
-    // Guard against duplicate receipt submissions for the same order.
     const existingPayment = await prisma.payment.findFirst({
         where: {
             orderId: order.id,
@@ -48,17 +46,38 @@ export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
         );
     }
 
-    await PaymentService.submitCardPayment(
-        user.id,
-        order.id,
-        1, // placeholder amount; real amount is on the order
-        ctx.photo
-    );
+    // Save payment to DB first — this must succeed before we send any messages.
+    try {
+        await PaymentService.submitCardPayment(
+            user.id,
+            order.id,
+            order.price,
+            ctx.photo
+        );
+    } catch (err: any) {
+        if (err.message === "PAYMENT_ALREADY_EXISTS") {
+            return adapter.sendMessage(
+                ctx.chatId,
+                "⚠️ رسید شما قبلاً دریافت شده و در حال بررسی است. لطفاً منتظر بمانید."
+            );
+        }
+        throw err;
+    }
 
-    await adapter.sendMessage(
-        ctx.chatId,
-        "✅ رسید دریافت شد.\n\nپس از بررسی، سرویس فعال میشود و برایتان ارسال می‌گردد."
-    );
+    // FIX: send user confirmation and admin notification independently.
+    // Previously, if sendMessage to the user threw (network error), the whole
+    // function exited and the admin never received the photo — even though the
+    // payment was already saved. Now each message is tried separately so a
+    // failure in one does not block the other.
+
+    await adapter
+        .sendMessage(
+            ctx.chatId,
+            "✅ رسید دریافت شد.\n\nپس از بررسی، سرویس فعال میشود و برایتان ارسال می‌گردد."
+        )
+        .catch((err) =>
+            console.error("[receiptHandler] Failed to send user confirmation:", err?.message ?? err)
+        );
 
     if (!ADMIN_CHAT_ID) {
         console.error("ADMIN_CHAT_ID is not set");
@@ -66,20 +85,24 @@ export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
     }
 
     if (ctx.photo) {
-        await adapter.sendPhoto(
-            ADMIN_CHAT_ID,
-            ctx.photo,
-            `سفارش جدید\nشماره سفارش: ${order.id}\n\nمبلغ سفارش: ${order.price}\nکاربر: ${ctx.chatId}\nتایید؟`,
-            {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            { text: "✅ تایید", callback_data: `APPROVE:${order.id}` },
-                            { text: "❌ رد", callback_data: `REJECT:${order.id}` },
+        await adapter
+            .sendPhoto(
+                ADMIN_CHAT_ID,
+                ctx.photo,
+                `سفارش جدید\nشماره سفارش: ${order.id}\n\nمبلغ سفارش: ${order.price / 10} تومان\nکاربر: ${ctx.chatId}\nتایید؟`,
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: "✅ تایید", callback_data: `APPROVE:${order.id}` },
+                                { text: "❌ رد", callback_data: `REJECT:${order.id}` },
+                            ],
                         ],
-                    ],
-                },
-            }
-        );
+                    },
+                }
+            )
+            .catch((err) =>
+                console.error("[receiptHandler] Failed to notify admin:", err?.message ?? err)
+            );
     }
 }
