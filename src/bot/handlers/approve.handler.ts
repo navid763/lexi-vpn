@@ -2,6 +2,7 @@ import { AdminService } from "../../services/admin.service.ts";
 import { prisma } from "../../config/prisma.ts";
 import type { BotContext } from "../types/bot.context.ts";
 import type { BotAdapter } from "../adapters/bot.adapter.ts";
+import { getRemainingTime } from "../../utils/date-time.ts";
 
 export const approveOrderHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     if (!ctx.callbackData) return;
@@ -9,15 +10,18 @@ export const approveOrderHandler = async (ctx: BotContext, adapter: BotAdapter) 
     const [action, orderIdRaw] = ctx.callbackData.split(":");
     const orderId = Number(orderIdRaw);
 
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: { product: true },
+    });
     if (!order) {
-        console.log("order not found - [bot-handlers-approveHandler]");
+        console.log("order not found - [approveOrderHandler]");
         return;
     }
 
     const customer = await prisma.user.findUnique({ where: { id: order.userId } });
     if (!customer) {
-        console.log("user not found - [bot-handlers-approveHandler]");
+        console.log("user not found - [approveOrderHandler]");
         return;
     }
 
@@ -25,17 +29,41 @@ export const approveOrderHandler = async (ctx: BotContext, adapter: BotAdapter) 
         try {
             const result = await AdminService.approveOrder(orderId);
 
-            await adapter.sendMessage(
-                ctx.chatId,
-                `✅ سفارش ${orderId} تایید شد\nکاربر: ${customer.chatId}`
-            );
+            if (result.isRenewal) {
+                // ── Renewal approval ───────────────────────────────────────────────
+                await adapter.sendMessage(
+                    ctx.chatId,
+                    `✅ تمدید سفارش #${orderId} تایید شد\nکاربر: ${customer.chatId}`
+                );
 
-            await adapter.sendMessage(
-                Number(customer.chatId),
-                `سفارش شما به شماره ${orderId} تایید شد\n✅ پرداخت شما تایید شد و سرویس فعال شد.\nکانفیگ شما:`
-            );
+                const newExpiry = result.subscription.expireAt;
+                await adapter
+                    .sendMessage(
+                        Number(customer.chatId),
+                        `✅ <b>تمدید اشتراک شما تایید شد!</b>\n\n` +
+                        `📦 پلن: ${order.product.name}\n` +
+                        `⏳ اعتبار جدید: <b>${getRemainingTime(newExpiry)}</b>\n\n` +
+                        `🔐 کانفیگ شما تغییری نکرده — همان لینک قبلی معتبر است.`
+                    )
+                    .catch((e) => console.error("Failed to notify customer of renewal:", e));
+            } else {
+                // ── New order approval ─────────────────────────────────────────────
+                await adapter.sendMessage(
+                    ctx.chatId,
+                    `✅ سفارش #${orderId} تایید شد\nکاربر: ${customer.chatId}`
+                );
 
-            await adapter.sendMessage(Number(customer.chatId), `${result.config.configUrl}`);
+                await adapter
+                    .sendMessage(
+                        Number(customer.chatId),
+                        `✅ سفارش شما به شماره #${orderId} تایید شد.\n\n🔐 کانفیگ اتصال شما:`
+                    )
+                    .catch(() => { });
+
+                await adapter
+                    .sendMessage(Number(customer.chatId), `${result.config!.configUrl}`)
+                    .catch((e) => console.error("Failed to send config to customer:", e));
+            }
         } catch (error: any) {
             if (error.message === "Order_Already_Processed") {
                 await adapter.sendMessage(ctx.chatId, "این سفارش قبلاً تعیین تکلیف شده است.");
@@ -48,12 +76,6 @@ export const approveOrderHandler = async (ctx: BotContext, adapter: BotAdapter) 
 
     if (action === "REJECT") {
         try {
-            // FIX: replace the read-then-write pattern with a conditional UPDATE that
-            // only succeeds if the order is still in WAITING_APPROVAL. This prevents
-            // a race where two admins reject simultaneously, or one approves while
-            // another is rejecting. Prisma returns the updated record count via
-            // updateMany with a where clause — if count === 0 the order was already
-            // processed.
             const { count } = await prisma.order.updateMany({
                 where: { id: orderId, status: "WAITING_APPROVAL" },
                 data: { status: "REJECTED" },
@@ -64,14 +86,17 @@ export const approveOrderHandler = async (ctx: BotContext, adapter: BotAdapter) 
                 return;
             }
 
-            await adapter.sendMessage(ctx.chatId, `❌ سفارش ${orderId} رد شد`);
-            await adapter.sendMessage(
-                Number(customer.chatId),
-                `سفارش شما ${orderId} رد شد`
-            );
+            const label = order.type === "RENEWAL" ? "تمدید" : "سفارش";
+            await adapter.sendMessage(ctx.chatId, `❌ ${label} #${orderId} رد شد`);
+            await adapter
+                .sendMessage(
+                    Number(customer.chatId),
+                    `❌ ${label} شما #${orderId} رد شد.\nدر صورت سوال با پشتیبانی در ارتباط باشید.`
+                )
+                .catch((e) => console.error("Failed to notify customer of rejection:", e));
         } catch (error: any) {
             console.error("Error rejecting order:", error);
-            await adapter.sendMessage(ctx.chatId, "خطایی در لغو سفارش رخ داد.");
+            await adapter.sendMessage(ctx.chatId, "خطایی در رد سفارش رخ داد.");
         }
     }
 };

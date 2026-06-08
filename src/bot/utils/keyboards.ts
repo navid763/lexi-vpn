@@ -5,6 +5,7 @@ export const mainMenuKeyboards = () => {
         inline_keyboard: [
             [{ text: "📦 سرویس های موجود", callback_data: "PLANS" }],
             [{ text: "🔐 سرویس‌های من", callback_data: "MY_SERVICES" }],
+            [{ text: "👤 پروفایل من", callback_data: "MY_PROFILE" }],
             [{ text: "💰 اعتبار من", callback_data: "MY_BALANCE" }],
             [{ text: "💝 اعتبار هدیه", callback_data: "GET_MY_REFERRAL" }],
         ],
@@ -14,7 +15,7 @@ export const mainMenuKeyboards = () => {
 export const productsKeyboard = (products: Product[]) => {
     const productButtons = products.map((product) => [
         {
-            text: `پکیج  ${product.trafficLimit / 1000} گیگ -  ${product.durationDays} روزه ⚜️  ${(product.price / 10).toLocaleString()} تومان ✅`,
+            text: `پکیج ${product.trafficLimit / 1000} گیگ — ${product.durationDays} روزه ⚜️ ${(product.price / 10).toLocaleString()} تومان`,
             callback_data: `BUY:${product.id}`,
         },
     ]);

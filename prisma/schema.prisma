@@ -23,7 +23,6 @@ model User {
   updatedAt      DateTime      @updatedAt @map("updated_at")
   deletedAt      DateTime?     @map("deleted_at")
 
-  // Self-referential relation for referrals
   referrer       User?         @relation("Referrals", fields: [invitedById], references: [id])
   referrals      User[]        @relation("Referrals")
 
@@ -37,8 +36,8 @@ model User {
 model Product {
   id            Int       @id @default(autoincrement())
   name          String
-  price         Int                   // stored in Rials
-  trafficLimit  Int       @map("traffic_limit")  // stored in MB
+  price         Int
+  trafficLimit  Int       @map("traffic_limit")
   durationDays  Int       @map("duration_days")
   isActive      Boolean   @default(true) @map("is_active")
 
@@ -52,24 +51,33 @@ model Product {
 }
 
 model Order {
-  id            Int           @id @default(autoincrement())
-  userId        Int           @map("user_id")
-  productId     Int           @map("product_id")
-  price         Int
-  status        OrderStatus   @default(PENDING_PAYMENT)
-  receiptImage  String?       @map("receipt_image")
-  adminNote     String?       @map("admin_note")
+  id                     Int           @id @default(autoincrement())
+  userId                 Int           @map("user_id")
+  productId              Int           @map("product_id")
+  price                  Int
+  type                   OrderType     @default(NEW_ORDER)
+  status                 OrderStatus   @default(PENDING_PAYMENT)
+  receiptImage           String?       @map("receipt_image")
+  adminNote              String?       @map("admin_note")
+  // For renewal orders: which subscription is being extended
+  renewalSubscriptionId  Int?          @map("renewal_subscription_id")
 
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
-  deletedAt     DateTime?     @map("deleted_at")
+  createdAt              DateTime      @default(now()) @map("created_at")
+  updatedAt              DateTime      @updatedAt @map("updated_at")
+  deletedAt              DateTime?     @map("deleted_at")
 
-  user          User          @relation(fields: [userId], references: [id])
-  product       Product       @relation(fields: [productId], references: [id])
-  payment       Payment?
-  subscription  Subscription?
+  user                   User          @relation(fields: [userId], references: [id])
+  product                Product       @relation(fields: [productId], references: [id])
+  renewalSubscription    Subscription? @relation("RenewalOrders", fields: [renewalSubscriptionId], references: [id])
+  payment                Payment?
+  subscription           Subscription? @relation("SubscriptionOrder")
 
   @@map("orders")
+}
+
+enum OrderType {
+  NEW_ORDER  @map("new_order")
+  RENEWAL    @map("renewal")
 }
 
 enum OrderStatus {
@@ -119,8 +127,8 @@ model Server {
   panelType  String?  @map("panel_type")
   isActive   Boolean  @default(true) @map("is_active")
 
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
   deletedAt  DateTime? @map("deleted_at")
 
   subscriptions Subscription[]
@@ -142,9 +150,11 @@ model Subscription {
   deletedAt     DateTime?          @map("deleted_at")
 
   user          User               @relation(fields: [userId], references: [id])
-  order         Order              @relation(fields: [orderId], references: [id])
+  order         Order              @relation("SubscriptionOrder", fields: [orderId], references: [id])
   server        Server             @relation(fields: [serverId], references: [id])
   config        Config?
+  // Renewal orders that reference this subscription
+  renewalOrders Order[]            @relation("RenewalOrders")
 
   @@map("subscriptions")
 }
@@ -169,4 +179,3 @@ model Config {
 
   @@map("configs")
 }
-
