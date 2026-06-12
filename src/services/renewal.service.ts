@@ -2,9 +2,12 @@
 // Config URL stays the same — the user doesn't need to reconfigure their apps.
 //
 // Two entry points:
-//   renewByWallet()  — instant, deducts balance + extends expiry atomically
-//   createRenewalOrder() — creates a RENEWAL-type order for card payment,
-//                          admin approves it, AdminService calls extendSubscription()
+//   renewByWallet()        — instant, deducts balance + extends expiry atomically
+//   createRenewalOrder()   — creates a RENEWAL-type order for card payment;
+//                            admin approves it, AdminService calls extendSubscription()
+//
+// IMPORTANT: both entry points re-fetch the product at the time of renewal so the
+// current price (not the original purchase price) is always used.
 
 import { prisma } from "../config/prisma.ts";
 import type { Prisma } from "@prisma/client";
@@ -17,19 +20,10 @@ export class RenewalService {
     return prisma.$transaction(async (tx) => {
       const subscription = await tx.subscription.findUnique({
         where: { id: subscriptionId },
-        include: {
-          order: { include: { product: true } },
-          config: true,
-        },
+        include: { order: { include: { product: true } } },
       });
 
-      // Re-fetch via the original order to get the product
-      const originalOrder = await tx.order.findUnique({
-        where: { id: subscription!.orderId },
-        include: { product: true },
-      });
-
-      if (!subscription || !originalOrder) {
+      if (!subscription) {
         throw new Error("SUBSCRIPTION_NOT_FOUND");
       }
 
@@ -37,16 +31,26 @@ export class RenewalService {
         throw new Error("SUBSCRIPTION_NOT_OWNED");
       }
 
-      const product = originalOrder.product;
-      const price = product.price;
+      // Re-fetch the product to get its CURRENT price and status.
+      // We only use subscription.order.product.id — the rest is stale.
+      const originalProductId = subscription.order.product.id;
+      const currentProduct = await tx.product.findUnique({
+        where: { id: originalProductId },
+      });
+
+      if (!currentProduct || !currentProduct.isActive || currentProduct.deletedAt) {
+        throw new Error("PRODUCT_UNAVAILABLE");
+      }
+
+      const price = currentProduct.price;
 
       // Authoritative balance check inside the transaction
-      const user = await tx.user.update({
+      const updatedUser = await tx.user.update({
         where: { id: userId },
         data: { balance: { decrement: price } },
       });
 
-      if (user.balance < 0) {
+      if (updatedUser.balance < 0) {
         throw new Error("INSUFFICIENT_BALANCE");
       }
 
@@ -58,7 +62,7 @@ export class RenewalService {
           : new Date();
 
       const newExpireAt = new Date(baseDate);
-      newExpireAt.setDate(newExpireAt.getDate() + product.durationDays);
+      newExpireAt.setDate(newExpireAt.getDate() + currentProduct.durationDays);
 
       const updatedSubscription = await tx.subscription.update({
         where: { id: subscriptionId },
@@ -69,11 +73,11 @@ export class RenewalService {
         include: { config: true },
       });
 
-      // Create a renewal order record for accounting
+      // Create a renewal order record for accounting (uses current price)
       const renewalOrder = await tx.order.create({
         data: {
           userId,
-          productId: product.id,
+          productId: currentProduct.id,
           price,
           type: "RENEWAL",
           status: "APPROVED",
@@ -92,7 +96,11 @@ export class RenewalService {
         },
       });
 
-      return { subscription: updatedSubscription, order: renewalOrder, product };
+      return {
+        subscription: updatedSubscription,
+        order: renewalOrder,
+        product: currentProduct,
+      };
     });
   }
 
@@ -139,13 +147,21 @@ export class RenewalService {
     if (!subscription) throw new Error("SUBSCRIPTION_NOT_FOUND");
     if (subscription.userId !== userId) throw new Error("SUBSCRIPTION_NOT_OWNED");
 
-    const product = subscription.order.product;
+    // Re-fetch the product to get its CURRENT price and status.
+    const originalProductId = subscription.order.product.id;
+    const currentProduct = await prisma.product.findUnique({
+      where: { id: originalProductId },
+    });
+
+    if (!currentProduct || !currentProduct.isActive || currentProduct.deletedAt) {
+      throw new Error("PRODUCT_UNAVAILABLE");
+    }
 
     return prisma.order.create({
       data: {
         userId,
-        productId: product.id,
-        price: product.price,
+        productId: currentProduct.id,
+        price: currentProduct.price, // current price, not original
         type: "RENEWAL",
         status: "PENDING_PAYMENT",
         renewalSubscriptionId: subscriptionId,

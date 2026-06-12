@@ -1,13 +1,11 @@
 import { prisma } from "../config/prisma.ts";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, SubscriptionStatus } from "@prisma/client";
 
 export class SubscriptionService {
     static async createSubscription(
         orderId: number,
-
         tx?: Prisma.TransactionClient
     ) {
-
         const db = tx ?? prisma;
 
         const order = await db.order.findUniqueOrThrow({
@@ -45,9 +43,10 @@ export class SubscriptionService {
         all: boolean = false,
         limit: number = 10
     ) {
-        const statusFilter = all
-            ? { in: ["ACTIVE", "EXPIRED"] as const }
-            : { equals: "ACTIVE" as const };
+        const statusFilter: Prisma.SubscriptionWhereInput["status"] = all
+            ? { in: ["ACTIVE", "EXPIRED"] }
+            : "ACTIVE";
+
 
         const subscriptions = await prisma.subscription.findMany({
             where: {
@@ -55,6 +54,14 @@ export class SubscriptionService {
                 status: statusFilter,
                 deletedAt: null,
             },
+            include: {
+                order: {
+                    include: {
+                        product: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: "desc" },
             take: limit,
         });
 

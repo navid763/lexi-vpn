@@ -6,7 +6,7 @@ import { startHandler } from "../handlers/start.handler.ts";
 import { checkWalletBalanceHandler } from "../handlers/check-wallet.handler.ts";
 import { subscriptionsHandler } from "../handlers/subscriptions.handler.ts";
 import { plansHandler } from "../handlers/plans.handler.ts";
-import { profileHandler } from "../handlers/cancel-handlers/profile.handler.ts";
+import { profileHandler } from "../handlers/profile.handler.ts";
 import { adminMenuHandler } from "../handlers/admin/admin-menu.handler.ts";
 
 export async function commandRouter(ctx: BotContext, adapter: BotAdapter) {

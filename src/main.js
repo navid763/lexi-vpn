@@ -2,6 +2,7 @@ import app from "./app.ts";
 import { prisma } from "./config/prisma.ts";
 import { startBot } from "./bot/startBot.ts";
 import "./utils/cron/subscription-expire-check.ts";
+import "./utils/cron/order-timeout-check.ts"
 
 const PORT = process.env.PORT || 3000;
 

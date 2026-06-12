@@ -16,7 +16,7 @@ import { approveTopupHandler } from "../handlers/approve-walet-topup.handler.ts"
 import { getMyRefCodeHandler } from "../handlers/get-referral-code.handler.ts";
 import { cancellWalletTopUpAmountHandler } from "../handlers/cancel-handlers/cancel-wallet-topup-amount.handler.ts";
 import { cancelCardPayHandler } from "../handlers/cancel-handlers/cancel-card-pay.handler.ts";
-import { profileHandler } from "../handlers/cancel-handlers/profile.handler.ts";
+import { profileHandler } from "../handlers/profile.handler.ts";
 
 // Admin handlers
 import { adminMenuHandler } from "../handlers/admin/admin-menu.handler.ts";
@@ -33,6 +33,9 @@ import {
     adminForceRejectHandler,
 } from "../handlers/admin/admin-order-detail.handler.ts";
 import { adminBroadcastAskHandler } from "../handlers/admin/admin-broadcast.handler.ts";
+
+import { renewalOptionsHandler } from "../handlers/renewal.handler.ts";
+import { renewalWalletHandler, renewalCardHandler } from "../handlers/renewal-pay.handler.ts";
 
 export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
     if (!ctx.callbackData) return;
@@ -84,6 +87,16 @@ export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
 
         case "CANCEL_CARD_PAY":
             return cancelCardPayHandler(ctx, adapter);
+
+        case "RENEW":
+            return renewalOptionsHandler(ctx, adapter);
+
+        case "RENEWAL_WALLET":
+            return renewalWalletHandler(ctx, adapter);
+
+        case "RENEWAL_CARD":
+            return renewalCardHandler(ctx, adapter);
+
 
         // ── Admin flows ───────────────────────────────────────────────────────
         case "ADMIN_MENU":
