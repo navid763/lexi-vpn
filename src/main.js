@@ -2,7 +2,8 @@ import app from "./app.ts";
 import { prisma } from "./config/prisma.ts";
 import { startBot } from "./bot/startBot.ts";
 import "./utils/cron/subscription-expire-check.ts";
-import "./utils/cron/order-timeout-check.ts"
+import "./utils/cron/order-timeout-check.ts";
+import { XuiService } from "./services/xui.service.ts";
 
 const PORT = process.env.PORT || 3000;
 
@@ -12,6 +13,7 @@ const start = async () => {
         await prisma.$connect();
         console.log("✅ Database connected");
 
+        await XuiService.warmup(); //for caching inbound
 
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);

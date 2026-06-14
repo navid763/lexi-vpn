@@ -56,20 +56,39 @@ export const approveOrderHandler = async (ctx: BotContext, adapter: BotAdapter) 
                 await adapter
                     .sendMessage(
                         Number(customer.chatId),
-                        `✅ سفارش شما به شماره #${orderId} تایید شد.\n\n🔐 کانفیگ اتصال شما:`
+                        `✅ سفارش شما به شماره #${orderId} تایید شد.\n\n` +
+                        `📋 راهنما:\n` +
+                        `۱. لینک اشتراک را در کلاینت خود وارد کنید (توصیه شده)\n` +
+                        `۲. یا مستقیماً کانفیگ زیر را import کنید`
                     )
                     .catch(() => { });
 
-                await adapter
-                    .sendMessage(Number(customer.chatId), `${result.config!.configUrl}`)
-                    .catch((e) => console.error("Failed to send config to customer:", e));
+                // Subscription link
+                if (result.config && (result.config as any).subUrl) {
+                    await adapter
+                        .sendMessage(
+                            Number(customer.chatId),
+                            `🔗 <b>لینک اشتراک:</b>\n<code>${(result.config as any).subUrl}</code>`
+                        )
+                        .catch(() => { });
+                }
+
+                // Direct config URI
+                if (result.config?.configUrl) {
+                    await adapter
+                        .sendMessage(
+                            Number(customer.chatId),
+                            `🔐 <b>کانفیگ مستقیم:</b>\n<code>${result.config.configUrl}</code>`
+                        )
+                        .catch((e) => console.error("Failed to send config to customer:", e));
+                }
             }
         } catch (error: any) {
             if (error.message === "Order_Already_Processed") {
                 await adapter.sendMessage(ctx.chatId, "این سفارش قبلاً تعیین تکلیف شده است.");
             } else {
                 console.error("Error approving order:", error);
-                await adapter.sendMessage(ctx.chatId, "خطایی در تایید سفارش رخ داد.");
+                await adapter.sendMessage(ctx.chatId, `خطایی در تایید سفارش رخ داد:\n${error.message}`);
             }
         }
     }

@@ -170,6 +170,7 @@ model Config {
   subscriptionId Int          @unique @map("subscription_id")
   uuid           String
   configUrl      String       @map("config_url")
+  subUrl         String?      @map("sub_url")        // ← add this
 
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")

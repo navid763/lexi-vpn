@@ -44,7 +44,6 @@ export const walletPayHandler = async (ctx: BotContext, adapter: BotAdapter) => 
 
         if (!response.success) {
             if (response.reason === "insufficient_balance_[approveOrderByWallet]") {
-
                 await prisma.order.update({
                     where: { id: order.id },
                     data: { status: "CANCELLED" },
@@ -61,24 +60,53 @@ export const walletPayHandler = async (ctx: BotContext, adapter: BotAdapter) => 
 
         const { order: approvedOrder, config } = response.result;
 
+        // Notify admin (non-blocking)
+        if (ADMIN_CHAT_ID) {
+            adapter
+                .sendMessage(
+                    ADMIN_CHAT_ID,
+                    `✅ سفارش تایید شد\n\nOrder ID: ${approvedOrder.id}\nUser: ${ctx.chatId}\nPayment: Wallet\nAmount: ${(approvedOrder.price / 10).toLocaleString()} تومان`
+                )
+                .catch(() => { });
+        }
+
+        // ── Deliver config to the user ────────────────────────────────────────
         await adapter.sendMessage(
-            ADMIN_CHAT_ID,
-            `✅ سفارش تایید شد\n\nOrder ID: ${approvedOrder.id}\nUser: ${ctx.chatId}\nPayment: Wallet\nAmount: ${approvedOrder.price}`
+            ctx.chatId,
+            `✅ سفارش شما با موفقیت ثبت و فعال شد.\n\n` +
+            `شماره سفارش: ${approvedOrder.id}\n\n` +
+            `📋 راهنما:\n` +
+            `۱. لینک اشتراک را در کلاینت خود وارد کنید (توصیه شده — کانفیگ به‌روزرسانی می‌شود)\n` +
+            `۲. یا مستقیماً کانفیگ زیر را import کنید`
+        );
+
+        // Subscription link (auto-updates on panel side)
+        if ((config as any).subUrl) {
+            await adapter.sendMessage(
+                ctx.chatId,
+                `🔗 <b>لینک اشتراک:</b>\n<code>${(config as any).subUrl}</code>`
+            );
+        }
+
+        // Direct import URI
+        await adapter.sendMessage(
+            ctx.chatId,
+            `🔐 <b>کانفیگ مستقیم:</b>\n<code>${config.configUrl}</code>`
         );
 
         await adapter.sendMessage(
-            Number(ctx.chatId),
-            `✅ سفارش شما با موفقیت ثبت و فعال شد.\n\nشماره سفارش: ${approvedOrder.id}\n\n🔐 کانفیگ اتصال شما:\n\n${config.configUrl}\n`
-        );
-
-        await adapter.sendMessage(Number(ctx.chatId), `${config.configUrl}`);
-
-        await adapter.sendMessage(
-            Number(ctx.chatId),
-            `تشکر از حسن اعتماد شما.\nدر صورت بروز هر گونه مشکل با پشتیبانی تماس بگیرید`
+            ctx.chatId,
+            `تشکر از حسن اعتماد شما.\nدر صورت بروز هر گونه مشکل با پشتیبانی تماس بگیرید`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: "📋 سرویس‌های من", callback_data: "MY_SERVICES" }],
+                        [{ text: "🏠 خانه", callback_data: "HOME" }],
+                    ],
+                },
+            }
         );
     } catch (error: any) {
-
         await prisma.order.update({
             where: { id: order.id },
             data: { status: "CANCELLED" },
@@ -87,10 +115,17 @@ export const walletPayHandler = async (ctx: BotContext, adapter: BotAdapter) => 
         console.error("Critical Error approving order:", error);
 
         if (ADMIN_CHAT_ID) {
-            await adapter.sendMessage(
-                Number(ADMIN_CHAT_ID),
-                `❌ خطا در سیستم حین تایید سفارش\n\nOrder: ${order.id}\nUser: ${ctx.chatId}`
-            );
+            adapter
+                .sendMessage(
+                    ADMIN_CHAT_ID,
+                    `❌ خطا در سیستم حین تایید سفارش\n\nOrder: ${order.id}\nUser: ${ctx.chatId}\nError: ${error.message}`
+                )
+                .catch(() => { });
         }
+
+        await adapter.sendMessage(
+            ctx.chatId,
+            "❌ خطایی در فعال‌سازی سرویس رخ داد. سفارش لغو شد.\nلطفاً با پشتیبانی تماس بگیرید."
+        );
     }
 };
