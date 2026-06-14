@@ -26,9 +26,10 @@ export class ConfigService {
 
         // ── Build parameters for the panel ───────────────────────────────────
 
-        // stored as MB (10000 = 10 GB) in DB
-        // 3x-ui expects bytes
-        const trafficLimitBytes = subscription.trafficLimit * 1024 * 1024 * 1024; // GB to Bytes
+        // trafficLimit is stored in MB in the DB (e.g. 10000 = 10 GB).
+        // 3x-ui addClient expects bytes.
+        // FIX: was incorrectly multiplying by 1024^3 (treating MB as GB → ~1000x too large).
+        const trafficLimitBytes = subscription.trafficLimit * 1024 * 1024; // MB → bytes
 
         const expiryTimeMs = new Date(subscription.expireAt).getTime();
 
@@ -39,26 +40,16 @@ export class ConfigService {
         const xuiResult = await XuiService.addClient(trafficLimitBytes, expiryTimeMs, remark);
 
         // ── Persist ───────────────────────────────────────────────────────────
+        // subUrl already exists as a nullable column in the schema — store it directly.
         const config = await db.config.create({
             data: {
                 subscriptionId,
                 uuid: xuiResult.uuid,
-                // Store the direct import URI as configUrl (what we show the user)
                 configUrl: xuiResult.configUrl,
-                // Store the subscription link in a separate column so the bot can
-                // send both. We reuse the existing schema — see note below.
-                // If you want to add a `subUrl` column, run a migration and add it
-                // to the Prisma model. For now we embed it after a newline so the
-                // bot can split on "\n" to retrieve it.
-                // Better: add the column. For a zero-migration approach uncomment:
-                // configUrl: `${xuiResult.configUrl}\n${xuiResult.subUrl}`,
+                subUrl: xuiResult.subUrl,
             },
         });
 
-        // Return extra fields the bot needs even though they aren't in the DB model
-        return {
-            ...config,
-            subUrl: xuiResult.subUrl,
-        };
+        return config;
     }
 }

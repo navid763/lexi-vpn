@@ -49,11 +49,9 @@ export const profileHandler = async (ctx: BotContext, adapter: BotAdapter) => {
             text += `   📶 حجم: ${sub.trafficLimit / 1000} گیگابایت\n`;
 
             if (sub.config) {
-                // Build the subscription base URL from env to reconstruct the sub link
-                // The uuid is stored and we can rebuild the sub URL from it
-                const subBaseUrl = process.env.XUI_SUB_URL;
-                if (subBaseUrl) {
-                    text += `   🔗 لینک اشتراک (توصیه شده):\n<code>${subBaseUrl}/${sub.config.uuid}</code>\n`;
+                // subUrl is stored directly in the DB — no reconstruction needed.
+                if (sub.config.subUrl) {
+                    text += `   🔗 لینک اشتراک (توصیه شده):\n<code>${sub.config.subUrl}</code>\n`;
                 }
                 text += `   🔐 کانفیگ مستقیم:\n<code>${sub.config.configUrl}</code>\n`;
             }

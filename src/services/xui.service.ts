@@ -21,6 +21,7 @@ import crypto from "crypto";
 export interface XuiClientResult {
     uuid: string;
     email: string;
+    subId: string;
     /** Direct import URI — paste into any VLESS client */
     configUrl: string;
     /** Subscription link — client fetches & auto-updates config from this */
@@ -84,17 +85,16 @@ async function getRealitySettings(): Promise<RealitySettings> {
 
     const obj = res.data.obj;
 
-    const stream = JSON.parse(
-        obj.streamSettings ?? "{}"
-    ) as StreamSettings;
-
-    // try {
-    //     const stream = JSON.parse(
-    //         obj.streamSettings ?? "{}"
-    //     ) as StreamSettings;
-    // } catch {
-    //     throw new Error("3x-ui: could not parse streamSettings JSON");
-    // }
+    // FIX: restored the try/catch that was commented out.
+    // A malformed streamSettings JSON would otherwise throw an opaque SyntaxError.
+    let stream: StreamSettings;
+    try {
+        stream = JSON.parse(obj.streamSettings ?? "{}") as StreamSettings;
+    } catch {
+        throw new Error(
+            `3x-ui: could not parse streamSettings JSON for inbound ${inboundId}`
+        );
+    }
 
     const reality = stream.realitySettings;
     if (!reality) {
@@ -146,7 +146,7 @@ export class XuiService {
      * Adds a new VLESS+Reality client and returns both the direct config URI
      * and the subscription link.
      *
-     * @param trafficLimitBytes  Quota in bytes (e.g. 10 * 1024³ for 10 GB)
+     * @param trafficLimitBytes  Quota in bytes (e.g. 10 * 1024² for 10 GB stored as MB)
      * @param expiryTimeMs       Unix timestamp in milliseconds
      * @param remark             Label shown in the panel UI
      */
@@ -193,7 +193,7 @@ export class XuiService {
         const configUrl = buildVlessRealityUrl(uuid, email, reality);
         const subUrl = `${env("XUI_SUB_URL")}/${subId}`;
 
-        return { uuid, email, configUrl, subUrl };
+        return { uuid, email, subId, configUrl, subUrl };
     }
 
     /**
