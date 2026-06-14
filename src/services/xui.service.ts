@@ -38,6 +38,16 @@ interface RealitySettings {
     spiderX: string;
 }
 
+interface StreamSettings {
+    realitySettings?: {
+        publicKey?: string;
+        fingerprint?: string;
+        serverNames?: string[];
+        shortIds?: string[];
+        spiderX?: string;
+    };
+}
+
 let cachedReality: RealitySettings | null = null;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -73,13 +83,18 @@ async function getRealitySettings(): Promise<RealitySettings> {
     }
 
     const obj = res.data.obj;
-    let stream: any = {};
 
-    try {
-        stream = JSON.parse(obj.streamSettings ?? "{}");
-    } catch {
-        throw new Error("3x-ui: could not parse streamSettings JSON");
-    }
+    const stream = JSON.parse(
+        obj.streamSettings ?? "{}"
+    ) as StreamSettings;
+
+    // try {
+    //     const stream = JSON.parse(
+    //         obj.streamSettings ?? "{}"
+    //     ) as StreamSettings;
+    // } catch {
+    //     throw new Error("3x-ui: could not parse streamSettings JSON");
+    // }
 
     const reality = stream.realitySettings;
     if (!reality) {
