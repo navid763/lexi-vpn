@@ -1,8 +1,8 @@
-import type { BotAdapter } from "../../adapters/bot.adapter.ts";
-import type { BotContext } from "../../types/bot.context.ts";
-import { prisma } from "../../../config/prisma.ts";
-import { parseCallbackData } from "../../utils/callback-data.ts";
-import { userSteps } from "../../utils/state.ts";
+import type { BotAdapter } from "../../adapters/bot.adapter.js";
+import type { BotContext } from "../../types/bot.context.js";
+import { prisma } from "../../../config/prisma.js";
+import { parseCallbackData } from "../../utils/callback-data.js";
+import { userSteps } from "../../utils/state.js";
 
 export const cancellWalletTopUpAmountHandler = async (
     ctx: BotContext,

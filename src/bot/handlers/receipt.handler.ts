@@ -1,7 +1,7 @@
-import { prisma } from "../../config/prisma.ts";
-import { PaymentService } from "../../services/payment.service.ts";
-import type { BotContext } from "../types/bot.context.ts";
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
+import { prisma } from "../../config/prisma.js";
+import { PaymentService } from "../../services/payment.service.js";
+import type { BotContext } from "../types/bot.context.js";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
 
 const ADMIN_CHAT_ID = Number(process.env.ADMIN_CHAT_ID);
 

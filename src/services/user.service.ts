@@ -1,4 +1,4 @@
-import { prisma } from "../config/prisma.ts";
+import { prisma } from "../config/prisma.js";
 import * as crypto from "crypto";
 
 function generateUniqueCode(): string {

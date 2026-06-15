@@ -1,41 +1,41 @@
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import type { BotContext } from "../types/bot.context.ts";
-import { parseCallbackData } from "../utils/callback-data.ts";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import type { BotContext } from "../types/bot.context.js";
+import { parseCallbackData } from "../utils/callback-data.js";
 
 // Existing handlers
-import { plansHandler } from "../handlers/plans.handler.ts";
-import { startHandler } from "../handlers/start.handler.ts";
-import { cardPayHandler } from "../handlers/card-pay.handler.ts";
-import { approveOrderHandler } from "../handlers/approve.handler.ts";
-import { subscriptionsHandler } from "../handlers/subscriptions.handler.ts";
-import { checkWalletBalanceHandler } from "../handlers/check-wallet.handler.ts";
-import { paymentOptionsHandler } from "../handlers/payment-options.handler.ts";
-import { walletPayHandler } from "../handlers/wallet-pay.handler.ts";
-import { increaseBalanceHandler } from "../handlers/increase-balance.handler.ts";
-import { approveTopupHandler } from "../handlers/approve-walet-topup.handler.ts";
-import { getMyRefCodeHandler } from "../handlers/get-referral-code.handler.ts";
-import { cancellWalletTopUpAmountHandler } from "../handlers/cancel-handlers/cancel-wallet-topup-amount.handler.ts";
-import { cancelCardPayHandler } from "../handlers/cancel-handlers/cancel-card-pay.handler.ts";
-import { profileHandler } from "../handlers/profile.handler.ts";
+import { plansHandler } from "../handlers/plans.handler.js";
+import { startHandler } from "../handlers/start.handler.js";
+import { cardPayHandler } from "../handlers/card-pay.handler.js";
+import { approveOrderHandler } from "../handlers/approve.handler.js";
+import { subscriptionsHandler } from "../handlers/subscriptions.handler.js";
+import { checkWalletBalanceHandler } from "../handlers/check-wallet.handler.js";
+import { paymentOptionsHandler } from "../handlers/payment-options.handler.js";
+import { walletPayHandler } from "../handlers/wallet-pay.handler.js";
+import { increaseBalanceHandler } from "../handlers/increase-balance.handler.js";
+import { approveTopupHandler } from "../handlers/approve-walet-topup.handler.js";
+import { getMyRefCodeHandler } from "../handlers/get-referral-code.handler.js";
+import { cancellWalletTopUpAmountHandler } from "../handlers/cancel-handlers/cancel-wallet-topup-amount.handler.js";
+import { cancelCardPayHandler } from "../handlers/cancel-handlers/cancel-card-pay.handler.js";
+import { profileHandler } from "../handlers/profile.handler.js";
 
 // Admin handlers
-import { adminMenuHandler } from "../handlers/admin/admin-menu.handler.ts";
-import { adminStatsHandler } from "../handlers/admin/admin-stats.handler.ts";
-import { adminSearchUserHandler } from "../handlers/admin/admin-search-user.handler.ts";
+import { adminMenuHandler } from "../handlers/admin/admin-menu.handler.js";
+import { adminStatsHandler } from "../handlers/admin/admin-stats.handler.js";
+import { adminSearchUserHandler } from "../handlers/admin/admin-search-user.handler.js";
 import {
     adminUserDetailHandler,
     adminManualTopupAskHandler,
-} from "../handlers/admin/admin-user-detail.handler.ts";
+} from "../handlers/admin/admin-user-detail.handler.js";
 import {
     adminSearchOrderHandler,
     adminOrderDetailHandler,
     adminForceApproveHandler,
     adminForceRejectHandler,
-} from "../handlers/admin/admin-order-detail.handler.ts";
-import { adminBroadcastAskHandler } from "../handlers/admin/admin-broadcast.handler.ts";
+} from "../handlers/admin/admin-order-detail.handler.js";
+import { adminBroadcastAskHandler } from "../handlers/admin/admin-broadcast.handler.js";
 
-import { renewalOptionsHandler } from "../handlers/renewal.handler.ts";
-import { renewalWalletHandler, renewalCardHandler } from "../handlers/renewal-pay.handler.ts";
+import { renewalOptionsHandler } from "../handlers/renewal.handler.js";
+import { renewalWalletHandler, renewalCardHandler } from "../handlers/renewal-pay.handler.js";
 
 export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
     if (!ctx.callbackData) return;

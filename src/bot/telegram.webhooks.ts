@@ -1,10 +1,10 @@
 import type { Request, Response } from "express";
-import { TelegramAdapter } from "./adapters/telegram.adapter.ts";
-import { callbackRouter } from "./routers/callback.router.ts";
-import { commandRouter } from "./routers/command.router.ts";
-import { messageRouter } from "./routers/message.router.ts";
-import { parseTelegramUpdate } from "./utils/parseTelegramUpdates.ts";
-import { checkRateLimit } from "./middlewares/rate-limit.middleware.ts";
+import { TelegramAdapter } from "./adapters/telegram.adapter.js";
+import { callbackRouter } from "./routers/callback.router.js";
+import { commandRouter } from "./routers/command.router.js";
+import { messageRouter } from "./routers/message.router.js";
+import { parseTelegramUpdate } from "./utils/parseTelegramUpdates.js";
+import { checkRateLimit } from "./middlewares/rate-limit.middleware.js";
 
 const adapter = new TelegramAdapter(process.env.TELEGRAM_BOT_TOKEN!);
 

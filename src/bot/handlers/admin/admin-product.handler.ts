@@ -1,9 +1,9 @@
-import type { BotContext } from "../../types/bot.context.ts";
-import type { BotAdapter } from "../../adapters/bot.adapter.ts";
-import { requireAdmin } from "../../middlewares/admin.middleware.ts";
-import { prisma } from "../../../config/prisma.ts";
-import { parseCallbackData } from "../../utils/callback-data.ts";
-import { userSteps } from "../../utils/state.ts";
+import type { BotContext } from "../../types/bot.context.js";
+import type { BotAdapter } from "../../adapters/bot.adapter.js";
+import { requireAdmin } from "../../middlewares/admin.middleware.js";
+import { prisma } from "../../../config/prisma.js";
+import { parseCallbackData } from "../../utils/callback-data.js";
+import { userSteps } from "../../utils/state.js";
 
 // ── Step flow for creating a product ─────────────────────────────────────────
 //

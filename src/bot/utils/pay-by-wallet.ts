@@ -1,7 +1,7 @@
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import { prisma } from "../../config/prisma.ts";
-import { ConfigService } from "../../services/config.service.ts";
-import { SubscriptionService } from "../../services/subscription.service.ts";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import { prisma } from "../../config/prisma.js";
+import { ConfigService } from "../../services/config.service.js";
+import { SubscriptionService } from "../../services/subscription.service.js";
 import type { Config, Order, Subscription } from "@prisma/client";
 
 interface ApproveSuccessResult {

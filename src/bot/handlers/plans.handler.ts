@@ -1,7 +1,7 @@
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import type { BotContext } from "../types/bot.context.ts";
-import { prisma } from "../../config/prisma.ts";
-import { productsKeyboard } from "../utils/keyboards.ts";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import type { BotContext } from "../types/bot.context.js";
+import { prisma } from "../../config/prisma.js";
+import { productsKeyboard } from "../utils/keyboards.js";
 
 export const plansHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     const products = await prisma.product.findMany({

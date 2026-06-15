@@ -1,4 +1,4 @@
-import { prisma } from "../config/prisma.ts";
+import { prisma } from "../config/prisma.js";
 import type { Prisma, SubscriptionStatus } from "@prisma/client";
 
 export class SubscriptionService {

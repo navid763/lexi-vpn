@@ -1,13 +1,13 @@
 // src/bot/routers/command.router.ts
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import type { BotContext } from "../types/bot.context.ts";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import type { BotContext } from "../types/bot.context.js";
 
-import { startHandler } from "../handlers/start.handler.ts";
-import { checkWalletBalanceHandler } from "../handlers/check-wallet.handler.ts";
-import { subscriptionsHandler } from "../handlers/subscriptions.handler.ts";
-import { plansHandler } from "../handlers/plans.handler.ts";
-import { profileHandler } from "../handlers/profile.handler.ts";
-import { adminMenuHandler } from "../handlers/admin/admin-menu.handler.ts";
+import { startHandler } from "../handlers/start.handler.js";
+import { checkWalletBalanceHandler } from "../handlers/check-wallet.handler.js";
+import { subscriptionsHandler } from "../handlers/subscriptions.handler.js";
+import { plansHandler } from "../handlers/plans.handler.js";
+import { profileHandler } from "../handlers/profile.handler.js";
+import { adminMenuHandler } from "../handlers/admin/admin-menu.handler.js";
 
 export async function commandRouter(ctx: BotContext, adapter: BotAdapter) {
     if (!ctx.text) return;

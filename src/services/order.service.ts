@@ -1,4 +1,4 @@
-import { prisma } from "../config/prisma.ts";
+import { prisma } from "../config/prisma.js";
 
 export class OrderService {
     static async createOrder(userId: number, productId: number) {

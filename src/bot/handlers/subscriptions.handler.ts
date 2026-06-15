@@ -1,8 +1,8 @@
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import type { BotContext } from "../types/bot.context.ts";
-import { SubscriptionService } from "../../services/subscription.service.ts";
-import { prisma } from "../../config/prisma.ts";
-import { getRemainingTime } from "../../utils/date-time.ts";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import type { BotContext } from "../types/bot.context.js";
+import { SubscriptionService } from "../../services/subscription.service.js";
+import { prisma } from "../../config/prisma.js";
+import { getRemainingTime } from "../../utils/date-time.js";
 
 export const subscriptionsHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     const user = await prisma.user.findUnique({

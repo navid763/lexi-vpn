@@ -1,8 +1,8 @@
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import type { BotContext } from "../types/bot.context.ts";
-import { prisma } from "../../config/prisma.ts";
-import { parseCallbackData } from "../utils/callback-data.ts";
-import { OrderService } from "../../services/order.service.ts";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import type { BotContext } from "../types/bot.context.js";
+import { prisma } from "../../config/prisma.js";
+import { parseCallbackData } from "../utils/callback-data.js";
+import { OrderService } from "../../services/order.service.js";
 
 export const cardPayHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     if (!ctx.callbackData) return;

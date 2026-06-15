@@ -9,7 +9,7 @@
 // IMPORTANT: both entry points re-fetch the product at the time of renewal so the
 // current price (not the original purchase price) is always used.
 
-import { prisma } from "../config/prisma.ts";
+import { prisma } from "../config/prisma.js";
 import type { Prisma } from "@prisma/client";
 
 export class RenewalService {

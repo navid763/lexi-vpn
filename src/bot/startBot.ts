@@ -1,10 +1,10 @@
-// import { BalePollingAdapter } from "./adapters/balePolling.adapter.ts";
-// import { BaleAdapter } from "./adapters/bale.adapter.ts";
-// import { parseBaleUpdate } from "./utils/parseBaleUpdate.ts";
+// import { BalePollingAdapter } from "./adapters/balePolling.adapter.js";
+// import { BaleAdapter } from "./adapters/bale.adapter.js";
+// import { parseBaleUpdate } from "./utils/parseBaleUpdate.js";
 
-// import { commandRouter } from "./routers/command.router.ts";
-// import { callbackRouter } from "./routers/callback.router.ts";
-// import { messageRouter } from "./routers/message.router.ts";
+// import { commandRouter } from "./routers/command.router.js";
+// import { callbackRouter } from "./routers/callback.router.js";
+// import { messageRouter } from "./routers/message.router.js";
 
 import axios from "axios";
 

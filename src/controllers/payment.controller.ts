@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { PaymentService } from "../services/payment.service.ts";
+import { PaymentService } from "../services/payment.service.js";
 
 export class PaymentController {
     static async submitPayment(req: Request, res: Response) {

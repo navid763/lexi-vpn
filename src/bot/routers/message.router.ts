@@ -1,20 +1,20 @@
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import type { BotContext } from "../types/bot.context.ts";
-import { topupAmountHandler, topupReceiptHandler } from "../handlers/wallet-topup.handler.ts";
-import { userSteps } from "../utils/state.ts";
-import { receiptHandler } from "../handlers/receipt.handler.ts";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import type { BotContext } from "../types/bot.context.js";
+import { topupAmountHandler, topupReceiptHandler } from "../handlers/wallet-topup.handler.js";
+import { userSteps } from "../utils/state.js";
+import { receiptHandler } from "../handlers/receipt.handler.js";
 import {
     adminUserSearchResultsHandler,
-} from "../handlers/admin/admin-search-user.handler.ts";
+} from "../handlers/admin/admin-search-user.handler.js";
 import {
     adminOrderSearchResultHandler,
-} from "../handlers/admin/admin-order-detail.handler.ts";
+} from "../handlers/admin/admin-order-detail.handler.js";
 import {
     adminBroadcastSendHandler,
-} from "../handlers/admin/admin-broadcast.handler.ts";
+} from "../handlers/admin/admin-broadcast.handler.js";
 import {
     adminManualTopupConfirmHandler,
-} from "../handlers/admin/admin-user-detail.handler.ts";
+} from "../handlers/admin/admin-user-detail.handler.js";
 
 export async function messageRouter(ctx: BotContext, adapter: BotAdapter) {
     const chatId = String(ctx.chatId);

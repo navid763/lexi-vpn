@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { AdminService } from "../services/admin.service.ts";
+import { AdminService } from "../services/admin.service.js";
 
 export class AdminController {
     static async approveOrder(req: Request, res: Response) {

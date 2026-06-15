@@ -1,6 +1,6 @@
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import type { BotContext } from "../types/bot.context.ts";
-import { userSteps } from "../utils/state.ts";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import type { BotContext } from "../types/bot.context.js";
+import { userSteps } from "../utils/state.js";
 
 export const increaseBalanceHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     try {

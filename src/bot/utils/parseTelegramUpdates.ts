@@ -1,4 +1,4 @@
-import type { BotContext } from "../types/bot.context.ts";
+import type { BotContext } from "../types/bot.context.js";
 
 export function parseTelegramUpdate(update: any): BotContext | null {
 

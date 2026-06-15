@@ -1,4 +1,4 @@
-import { prisma } from "../config/prisma.ts";
+import { prisma } from "../config/prisma.js";
 
 export class AdminPanelService {
 
@@ -120,7 +120,7 @@ export class AdminPanelService {
 
     static async forceApproveOrder(orderId: number) {
         // Reuses AdminService logic — import here to avoid circular deps
-        const { AdminService } = await import("./admin.service.ts");
+        const { AdminService } = await import("./admin.service.js");
         return AdminService.approveOrder(orderId);
     }
 

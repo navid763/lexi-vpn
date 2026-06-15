@@ -1,8 +1,8 @@
-import { AdminService } from "../../services/admin.service.ts";
-import { prisma } from "../../config/prisma.ts";
-import type { BotContext } from "../types/bot.context.ts";
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import { getRemainingTime } from "../../utils/date-time.ts";
+import { AdminService } from "../../services/admin.service.js";
+import { prisma } from "../../config/prisma.js";
+import type { BotContext } from "../types/bot.context.js";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import { getRemainingTime } from "../../utils/date-time.js";
 
 export const approveOrderHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     if (!ctx.callbackData) return;

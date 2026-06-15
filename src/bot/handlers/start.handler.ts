@@ -1,8 +1,8 @@
-import { UserService } from "../../services/user.service.ts";
-import type { BotContext } from "../types/bot.context.ts";
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import { mainMenuKeyboards } from "../utils/keyboards.ts";
-import { userSteps } from "../utils/state.ts";
+import { UserService } from "../../services/user.service.js";
+import type { BotContext } from "../types/bot.context.js";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import { mainMenuKeyboards } from "../utils/keyboards.js";
+import { userSteps } from "../utils/state.js";
 
 
 export const startHandler = async (ctx: BotContext, adapter: BotAdapter) => {

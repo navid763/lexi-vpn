@@ -1,4 +1,4 @@
-import type { BotContext } from "../types/bot.context.ts";
+import type { BotContext } from "../types/bot.context.js";
 export function parseBaleUpdate(update: any): BotContext | null {
 
     if (update.message) {

@@ -1,7 +1,7 @@
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import type { BotContext } from "../types/bot.context.ts";
-import { prisma } from "../../config/prisma.ts";
-import { userSteps } from "../utils/state.ts";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import type { BotContext } from "../types/bot.context.js";
+import { prisma } from "../../config/prisma.js";
+import { userSteps } from "../utils/state.js";
 
 const ADMIN_CHAT_ID = Number(process.env.ADMIN_CHAT_ID);
 

@@ -1,9 +1,9 @@
-import app from "./app.ts";
-import { prisma } from "./config/prisma.ts";
-import { startBot } from "./bot/startBot.ts";
-import "./utils/cron/subscription-expire-check.ts";
-import "./utils/cron/order-timeout-check.ts";
-import { XuiService } from "./services/xui.service.ts";
+import app from "./app.js";
+import { prisma } from "./config/prisma.js";
+import { startBot } from "./bot/startBot.js";
+import "./utils/cron/subscription-expire-check.js";
+import "./utils/cron/order-timeout-check.js";
+import { XuiService } from "./services/xui.service.js";
 
 const PORT = process.env.PORT || 3000;
 

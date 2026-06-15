@@ -1,7 +1,7 @@
-import { prisma } from "../config/prisma.ts";
-import { SubscriptionService } from "./subscription.service.ts";
-import { ConfigService } from "./config.service.ts";
-import { RenewalService } from "./renewal.service.ts";
+import { prisma } from "../config/prisma.js";
+import { SubscriptionService } from "./subscription.service.js";
+import { ConfigService } from "./config.service.js";
+import { RenewalService } from "./renewal.service.js";
 
 export class AdminService {
     static async approveOrder(orderId: number) {

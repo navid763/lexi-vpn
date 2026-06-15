@@ -1,8 +1,8 @@
-import type { BotContext } from "../../types/bot.context.ts";
-import type { BotAdapter } from "../../adapters/bot.adapter.ts";
-import { requireAdmin } from "../../middlewares/admin.middleware.ts";
-import { AdminPanelService } from "../../../services/admin-panel.service.ts";
-import { userSteps } from "../../utils/state.ts";
+import type { BotContext } from "../../types/bot.context.js";
+import type { BotAdapter } from "../../adapters/bot.adapter.js";
+import { requireAdmin } from "../../middlewares/admin.middleware.js";
+import { AdminPanelService } from "../../../services/admin-panel.service.js";
+import { userSteps } from "../../utils/state.js";
 
 // Step 1 — admin taps Broadcast → ask for message text
 export const adminBroadcastAskHandler = async (ctx: BotContext, adapter: BotAdapter) => {

@@ -1,5 +1,5 @@
-import { prisma } from "../config/prisma.ts";
-import { XuiService } from "./xui.service.ts";
+import { prisma } from "../config/prisma.js";
+import { XuiService } from "./xui.service.js";
 import type { Prisma } from "@prisma/client";
 
 export class ConfigService {

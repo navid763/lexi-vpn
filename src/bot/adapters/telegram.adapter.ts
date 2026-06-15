@@ -1,5 +1,5 @@
 import axios, { type AxiosError } from "axios";
-import type { BotAdapter, SendMessageOptions } from "./bot.adapter.ts";
+import type { BotAdapter, SendMessageOptions } from "./bot.adapter.js";
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 500; // retries at 500ms, 1000ms, 2000ms

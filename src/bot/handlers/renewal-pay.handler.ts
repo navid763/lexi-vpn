@@ -1,9 +1,9 @@
-import type { BotContext } from "../types/bot.context.ts";
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import { prisma } from "../../config/prisma.ts";
-import { parseCallbackData } from "../utils/callback-data.ts";
-import { RenewalService } from "../../services/renewal.service.ts";
-import { getRemainingTime } from "../../utils/date-time.ts";
+import type { BotContext } from "../types/bot.context.js";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import { prisma } from "../../config/prisma.js";
+import { parseCallbackData } from "../utils/callback-data.js";
+import { RenewalService } from "../../services/renewal.service.js";
+import { getRemainingTime } from "../../utils/date-time.js";
 
 const ADMIN_CHAT_ID = Number(process.env.ADMIN_CHAT_ID);
 

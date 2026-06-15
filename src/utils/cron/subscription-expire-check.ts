@@ -1,6 +1,6 @@
 import cron from "node-cron";
-import { prisma } from "../../config/prisma.ts";
-import { TelegramAdapter } from "../../bot/adapters/telegram.adapter.ts";
+import { prisma } from "../../config/prisma.js";
+import { TelegramAdapter } from "../../bot/adapters/telegram.adapter.js";
 
 const botToken = process.env.TELEGRAM_BOT_TOKEN || "";
 const adapter = new TelegramAdapter(botToken);

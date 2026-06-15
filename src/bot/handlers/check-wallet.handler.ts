@@ -1,6 +1,6 @@
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
-import type { BotContext } from "../types/bot.context.ts";
-import { prisma } from "../../config/prisma.ts";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
+import type { BotContext } from "../types/bot.context.js";
+import { prisma } from "../../config/prisma.js";
 
 export const checkWalletBalanceHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     try {

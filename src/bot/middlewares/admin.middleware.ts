@@ -1,6 +1,6 @@
-import { prisma } from "../../config/prisma.ts";
-import type { BotContext } from "../types/bot.context.ts";
-import type { BotAdapter } from "../adapters/bot.adapter.ts";
+import { prisma } from "../../config/prisma.js";
+import type { BotContext } from "../types/bot.context.js";
+import type { BotAdapter } from "../adapters/bot.adapter.js";
 
 export async function requireAdmin(
     ctx: BotContext,

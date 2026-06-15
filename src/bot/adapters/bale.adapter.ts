@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { BotAdapter, SendMessageOptions } from "./bot.adapter.ts";
+import type { BotAdapter, SendMessageOptions } from "./bot.adapter.js";
 
 export class BaleAdapter implements BotAdapter {
     private readonly baseUrl: string;

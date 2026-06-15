@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { AdminController } from "../controllers/admin.controller.ts";
-import { authMiddleware } from "../middlewares/auth.middleware.ts";
-import { adminGuard } from "../middlewares/admin.guard.ts";
+import { AdminController } from "../controllers/admin.controller.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { adminGuard } from "../middlewares/admin.guard.js";
 
 const adminRouther = Router();
 

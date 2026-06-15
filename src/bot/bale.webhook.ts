@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
-import { BaleAdapter } from "./adapters/bale.adapter.ts";
-import { callbackRouter } from "./routers/callback.router.ts";
-import { startHandler } from "./handlers/start.handler.ts";
-import type { BotContext } from "./types/bot.context.ts";
+import { BaleAdapter } from "./adapters/bale.adapter.js";
+import { callbackRouter } from "./routers/callback.router.js";
+import { startHandler } from "./handlers/start.handler.js";
+import type { BotContext } from "./types/bot.context.js";
 
 const adapter = new BaleAdapter(process.env.BALE_BOT_TOKEN!);
 

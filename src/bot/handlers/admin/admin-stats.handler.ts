@@ -1,7 +1,7 @@
-import type { BotContext } from "../../types/bot.context.ts";
-import type { BotAdapter } from "../../adapters/bot.adapter.ts";
-import { requireAdmin } from "../../middlewares/admin.middleware.ts";
-import { AdminPanelService } from "../../../services/admin-panel.service.ts";
+import type { BotContext } from "../../types/bot.context.js";
+import type { BotAdapter } from "../../adapters/bot.adapter.js";
+import { requireAdmin } from "../../middlewares/admin.middleware.js";
+import { AdminPanelService } from "../../../services/admin-panel.service.js";
 
 export const adminStatsHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     if (!(await requireAdmin(ctx, adapter))) return;

@@ -1,10 +1,10 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
 
-import adminRouther from "./routes/admin.router.ts";
-import orderRouther from "./routes/order.router.ts";
-import paymentRouther from "./routes/payment.router.ts";
-import { telegramWebhook } from "./bot/telegram.webhooks.ts";
+import adminRouther from "./routes/admin.router.js";
+import orderRouther from "./routes/order.router.js";
+import paymentRouther from "./routes/payment.router.js";
+import { telegramWebhook } from "./bot/telegram.webhooks.js";
 
 const app = express();
 
