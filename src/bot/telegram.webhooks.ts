@@ -4,20 +4,18 @@ import { callbackRouter } from "./routers/callback.router.ts";
 import { commandRouter } from "./routers/command.router.ts";
 import { messageRouter } from "./routers/message.router.ts";
 import { parseTelegramUpdate } from "./utils/parseTelegramUpdates.ts";
+import { checkRateLimit } from "./middlewares/rate-limit.middleware.ts";
 
 const adapter = new TelegramAdapter(process.env.TELEGRAM_BOT_TOKEN!);
 
 export const telegramWebhook = async (req: Request, res: Response) => {
 
-    // --- Security: verify the request actually came from Telegram ---
-    // You set this secret when calling setWebhook (see startBot.ts)
     const secret = req.headers["x-telegram-bot-api-secret-token"];
     if (secret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
-        // Return 401 but don't reveal why — no need to help attackers
         return res.sendStatus(401);
     }
 
-    // Telegram expects a fast 200 response; do the actual work after replying
+    // Telegram expects a fast 200 — always reply immediately
     res.sendStatus(200);
 
     try {
@@ -25,6 +23,18 @@ export const telegramWebhook = async (req: Request, res: Response) => {
         const ctx = parseTelegramUpdate(update);
 
         if (!ctx) return;
+
+        // ── Per-user rate limit ───────────────────────────────────────────────
+        // Admins bypass the limit so their panel actions are never blocked.
+        const isAdmin = String(ctx.chatId) === String(process.env.ADMIN_CHAT_ID);
+
+        if (!isAdmin && !checkRateLimit(ctx.chatId)) {
+            // Silent drop — no reply, no error. Telegram will not retry 200 responses
+            // so we simply ignore the excess update. Optionally send a one-time warning:
+            // await adapter.sendMessage(ctx.chatId, "⏳ لطفاً کمی آهسته‌تر...");
+            console.warn(`[RateLimit] chatId ${ctx.chatId} throttled`);
+            return;
+        }
 
         if (ctx.text?.startsWith("/")) {
             return commandRouter(ctx, adapter);
@@ -37,7 +47,6 @@ export const telegramWebhook = async (req: Request, res: Response) => {
         return messageRouter(ctx, adapter);
 
     } catch (err) {
-        // Log but don't crash — Telegram will retry failed updates
         console.error("Error processing Telegram update:", err);
     }
-}
+};
