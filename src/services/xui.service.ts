@@ -1,20 +1,7 @@
-/**
- * XuiService — 3x-ui panel integration (VLESS + Reality, inbound #4).
- *
- * Required env vars:
- *   XUI_PANEL_URL      — panel base URL including path prefix
- *                        e.g. http://jetlag8.ir:2079/navoolex
- *   XUI_API_TOKEN      — Bearer token from panel Settings → API
- *   XUI_INBOUND_ID     — inbound to add clients to (4)
- *   XUI_SUB_URL        — public subscription base URL
- *                        e.g. http://jetlag8.ir:2079/navoolex/sub
- *   XUI_SERVER_ADDRESS — the VPN server address users connect to
- *                        (may differ from panel host if panel is proxied)
- *                        e.g. jetlag8.ir
- */
-
 import axios, { type AxiosInstance } from "axios";
 import crypto from "crypto";
+import http from "http";
+import https from "https";
 
 // ─── Result type ──────────────────────────────────────────────────────────────
 
@@ -22,9 +9,7 @@ export interface XuiClientResult {
     uuid: string;
     email: string;
     subId: string;
-    /** Direct import URI — paste into any VLESS client */
     configUrl: string;
-    /** Subscription link — client fetches & auto-updates config from this */
     subUrl: string;
 }
 
@@ -37,16 +22,6 @@ interface RealitySettings {
     sni: string;
     shortId: string;
     spiderX: string;
-}
-
-interface StreamSettings {
-    realitySettings?: {
-        publicKey?: string;
-        fingerprint?: string;
-        serverNames?: string[];
-        shortIds?: string[];
-        spiderX?: string;
-    };
 }
 
 let cachedReality: RealitySettings | null = null;
@@ -63,68 +38,66 @@ function buildHttp(): AxiosInstance {
     return axios.create({
         baseURL: env("XUI_PANEL_URL"),
         validateStatus: () => true,
-        headers: { Authorization: `Bearer ${env("XUI_API_TOKEN")}` },
+        timeout: 15000, // تعیین تایم‌اوت مشخص برای جلوگیری از معلق ماندن سوکت
+        // استفاده از مأمورهای شبکه نیتیو برای زنده نگه داشتن اتصال و جلوگیری از ECONNRESET
+        httpAgent: new http.Agent({
+            keepAlive: true,
+            keepAliveMsecs: 4000,
+        }),
+
+        httpsAgent: new https.Agent({
+            keepAlive: true,
+            keepAliveMsecs: 4000,
+            rejectUnauthorized: false,
+        }),
+        headers: {
+            "Authorization": `Bearer ${env("XUI_API_TOKEN")}`,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Connection": "keep-alive" // اصرار به زنده نگه داشتن کانکشن
+        },
     });
 }
-
-// ─── Fetch & cache Reality settings from inbound ──────────────────────────────
 
 async function getRealitySettings(): Promise<RealitySettings> {
     if (cachedReality) return cachedReality;
 
-    const http = buildHttp();
+    const instance = buildHttp();
     const inboundId = Number(env("XUI_INBOUND_ID"));
-
-    const res = await http.get(`/panel/api/inbounds/get/${inboundId}`);
+    const res = await instance.get(`/panel/api/inbounds/get/${inboundId}`);
 
     if (!res.data?.success) {
-        throw new Error(
-            `3x-ui getInbound failed: ${JSON.stringify(res.data)}`
-        );
+        throw new Error(`3x-ui getInbound failed: ${JSON.stringify(res.data)}`);
     }
 
     const obj = res.data.obj;
-
-    // FIX: restored the try/catch that was commented out.
-    // A malformed streamSettings JSON would otherwise throw an opaque SyntaxError.
-    let stream: StreamSettings;
-    try {
-        stream = JSON.parse(obj.streamSettings ?? "{}") as StreamSettings;
-    } catch {
-        throw new Error(
-            `3x-ui: could not parse streamSettings JSON for inbound ${inboundId}`
-        );
+    let streamSettings: any = {};
+    if (typeof obj.streamSettings === "string") {
+        streamSettings = JSON.parse(obj.streamSettings);
+    } else if (typeof obj.streamSettings === "object") {
+        streamSettings = obj.streamSettings;
     }
 
-    const reality = stream.realitySettings;
+    const reality = streamSettings?.realitySettings;
     if (!reality) {
-        throw new Error(
-            "3x-ui: inbound is not configured with Reality security — check XUI_INBOUND_ID"
-        );
+        throw new Error("3x-ui: inbound is not configured with Reality security");
     }
 
+    const innerSettings = reality.settings || {};
     cachedReality = {
         port: obj.port,
-        publicKey: reality.publicKey ?? "",
-        fingerprint: reality.fingerprint ?? "chrome",
-        sni: reality.serverNames?.[0] ?? "",
-        shortId: reality.shortIds?.[0] ?? "",
-        spiderX: reality.spiderX ?? "/",
+        publicKey: innerSettings.publicKey || "",
+        fingerprint: innerSettings.fingerprint || "chrome",
+        sni: reality.serverNames?.[0] || "",
+        shortId: reality.shortIds?.[0] || "",
+        spiderX: innerSettings.spiderX || "/",
     };
 
-    console.log("[XuiService] Reality settings cached from inbound:", cachedReality);
     return cachedReality;
 }
 
-// ─── VLESS+Reality URI builder ────────────────────────────────────────────────
-
-function buildVlessRealityUrl(
-    uuid: string,
-    email: string,
-    reality: RealitySettings
-): string {
+function buildVlessRealityUrl(uuid: string, email: string, reality: RealitySettings): string {
     const address = env("XUI_SERVER_ADDRESS");
-
     const params = new URLSearchParams({
         type: "tcp",
         security: "reality",
@@ -135,7 +108,6 @@ function buildVlessRealityUrl(
         spx: reality.spiderX,
         flow: "xtls-rprx-vision",
     });
-
     return `vless://${uuid}@${address}:${reality.port}?${params.toString()}#${encodeURIComponent(email)}`;
 }
 
@@ -143,52 +115,84 @@ function buildVlessRealityUrl(
 
 export class XuiService {
     /**
-     * Adds a new VLESS+Reality client and returns both the direct config URI
-     * and the subscription link.
-     *
-     * @param trafficLimitBytes  Quota in bytes (e.g. 10 * 1024² for 10 GB stored as MB)
-     * @param expiryTimeMs       Unix timestamp in milliseconds
-     * @param remark             Label shown in the panel UI
+     * Safely adds a client by mutating the inbound schema with network safety wrappers
      */
     static async addClient(
         trafficLimitBytes: number,
         expiryTimeMs: number,
         remark: string
     ): Promise<XuiClientResult> {
-        const http = buildHttp();
+        const instance = buildHttp();
         const inboundId = Number(env("XUI_INBOUND_ID"));
 
-        const uuid = crypto.randomUUID();
-        const subId = crypto.randomBytes(8).toString("hex");
-        const email = `${remark}-${uuid.slice(0, 8)}`;
-
-        // Add client to panel
-        const res = await http.post("/panel/api/inbounds/addClient", {
-            id: inboundId,
-            settings: JSON.stringify({
-                clients: [{
-                    id: uuid,
-                    email,
-                    enable: true,
-                    expiryTime: expiryTimeMs,
-                    totalGB: trafficLimitBytes,
-                    flow: "xtls-rprx-vision",
-                    limitIp: 0,
-                    tgId: "",
-                    subId,
-                    comment: remark,
-                    reset: 0,
-                }],
-            }),
-        });
-
-        if (!res.data?.success) {
-            throw new Error(
-                `3x-ui addClient failed: ${JSON.stringify(res.data)}`
-            );
+        // ۱. دریافت وضعیت کنونی اینباند
+        const getRes = await instance.get(`/panel/api/inbounds/get/${inboundId}`);
+        if (!getRes.data?.success || !getRes.data?.obj) {
+            throw new Error(`Failed to fetch inbound state: ${JSON.stringify(getRes.data)}`);
         }
 
-        // Build both URLs
+        const inboundObj = getRes.data.obj;
+
+        let currentSettings: any = {};
+        if (typeof inboundObj.settings === "string") {
+            currentSettings = JSON.parse(inboundObj.settings);
+        } else if (typeof inboundObj.settings === "object") {
+            currentSettings = inboundObj.settings;
+        }
+
+        if (!currentSettings.clients) {
+            currentSettings.clients = [];
+        }
+
+        // ۲. ساخت مشخصات کلاینت جدید
+        const uuid = crypto.randomUUID();
+        const subId = crypto.randomBytes(8).toString("hex");
+        const shortId = crypto.randomBytes(4).toString("hex");
+        const email = `${remark.replace(/[^a-zA-Z0-9]/g, "")}_${shortId}`;
+
+        const clientPayload = {
+            id: uuid,
+            email: email,
+            enable: true,
+            expiryTime: typeof expiryTimeMs === "number" ? expiryTimeMs : 0,
+            totalGB: typeof trafficLimitBytes === "number" ? trafficLimitBytes : 0,
+            flow: "xtls-rprx-vision",
+            limitIp: 0,
+            tgId: 0,
+            subId: subId
+        };
+
+        // ۳. تزریق به کلاینت‌های موجود
+        currentSettings.clients.push(clientPayload);
+
+        // ۴. بازسازی کامل پکیج بروزرسانی اینباند
+        const updatePayload = {
+            enable: inboundObj.enable,
+            remark: inboundObj.remark,
+            port: inboundObj.port,
+            protocol: inboundObj.protocol,
+            settings: JSON.stringify(currentSettings),
+            streamSettings: typeof inboundObj.streamSettings === "object"
+                ? JSON.stringify(inboundObj.streamSettings)
+                : inboundObj.streamSettings,
+            sniffing: typeof inboundObj.sniffing === "object"
+                ? JSON.stringify(inboundObj.sniffing)
+                : inboundObj.sniffing,
+            expiryTime: inboundObj.expiryTime,
+            total: inboundObj.total
+        };
+
+        console.log(`[XuiService] Executing network-safe mutation on inbound #${inboundId} for: ${email}...`);
+
+        // ۵. ارسال درخواست با مأمور احراز هویت زنده
+        const updateRes = await instance.post(`/panel/api/inbounds/update/${inboundId}`, updatePayload);
+
+        if (!updateRes.data?.success) {
+            throw new Error(`Inbound mutation failed: ${JSON.stringify(updateRes.data)}`);
+        }
+
+        console.log("✅ [XuiService] Inbound successfully updated over persistent connection.");
+
         const reality = await getRealitySettings();
         const configUrl = buildVlessRealityUrl(uuid, email, reality);
         const subUrl = `${env("XUI_SUB_URL")}/${subId}`;
@@ -196,36 +200,46 @@ export class XuiService {
         return { uuid, email, subId, configUrl, subUrl };
     }
 
-    /**
-     * Removes a client from the panel by UUID.
-     * Non-fatal — logs on failure so the bot flow isn't blocked.
-     */
     static async disableClient(uuid: string): Promise<void> {
-        const http = buildHttp();
+        const instance = buildHttp();
         const inboundId = Number(env("XUI_INBOUND_ID"));
 
         try {
-            const res = await http.post(
-                `/panel/api/inbounds/${inboundId}/delClient/${uuid}`,
-                {}
-            );
-            if (!res.data?.success) {
-                console.error("[XuiService] disableClient panel error:", res.data);
+            const getRes = await instance.get(`/panel/api/inbounds/get/${inboundId}`);
+            if (!getRes.data?.success || !getRes.data?.obj) return;
+
+            const inboundObj = getRes.data.obj;
+            let currentSettings = typeof inboundObj.settings === "string" ? JSON.parse(inboundObj.settings) : inboundObj.settings;
+
+            if (currentSettings?.clients) {
+                currentSettings.clients = currentSettings.clients.filter((c: any) => c.id !== uuid);
+
+                const updatePayload = {
+                    enable: inboundObj.enable,
+                    remark: inboundObj.remark,
+                    port: inboundObj.port,
+                    protocol: inboundObj.protocol,
+                    settings: JSON.stringify(currentSettings),
+                    streamSettings: typeof inboundObj.streamSettings === "object" ? JSON.stringify(inboundObj.streamSettings) : inboundObj.streamSettings,
+                    sniffing: typeof inboundObj.sniffing === "object" ? JSON.stringify(inboundObj.sniffing) : inboundObj.sniffing,
+                    expiryTime: inboundObj.expiryTime,
+                    total: inboundObj.total
+                };
+
+                await instance.post(`/panel/api/inbounds/update/${inboundId}`, updatePayload);
+                console.log(`🗑️ [XuiService] Client ${uuid} removed.`);
             }
         } catch (err) {
-            console.error("[XuiService] disableClient network error:", err);
+            console.error("[XuiService] disableClient error:", err);
         }
     }
 
-    /**
-     * Call once at startup to pre-warm the Reality settings cache.
-     * Prevents the first real user from paying the fetch cost.
-     */
     static async warmup(): Promise<void> {
         try {
             await getRealitySettings();
         } catch (err) {
-            console.error("[XuiService] warmup failed — will retry on first use:", err);
+            console.error("[XuiService] warmup failed:", err);
+            throw err;
         }
     }
 }
