@@ -16,6 +16,8 @@ import {
     adminManualTopupConfirmHandler,
 } from "../handlers/admin/admin-user-detail.handler.js";
 
+import { adminEditCardConfirmHandler } from "../handlers/admin/admin-card.handler.js";
+
 export async function messageRouter(ctx: BotContext, adapter: BotAdapter) {
     const chatId = String(ctx.chatId);
     const step = userSteps.get(chatId);
@@ -46,6 +48,10 @@ export async function messageRouter(ctx: BotContext, adapter: BotAdapter) {
 
         if (step === "ADMIN_AWAITING_BROADCAST") {
             return adminBroadcastSendHandler(ctx, adapter);
+        }
+
+        if (step === "ADMIN_AWAITING_CARD_INFO") {
+            return adminEditCardConfirmHandler(ctx, adapter);
         }
 
         // ADMIN_AWAITING_TOPUP_AMOUNT:{userId} — value contains the target user id

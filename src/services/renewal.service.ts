@@ -17,7 +17,7 @@ export class RenewalService {
   // ── Called directly for wallet payments ──────────────────────────────────
 
   static async renewByWallet(subscriptionId: number, userId: number) {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const subscription = await tx.subscription.findUnique({
         where: { id: subscriptionId },
         include: { order: { include: { product: true } } },

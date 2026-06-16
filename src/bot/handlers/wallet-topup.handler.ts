@@ -2,14 +2,17 @@ import type { BotAdapter } from "../adapters/bot.adapter.js";
 import type { BotContext } from "../types/bot.context.js";
 import { prisma } from "../../config/prisma.js";
 import { userSteps } from "../utils/state.js";
+import { SettingsService } from "../../services/settings.service.js";
+import { cardPayHandler } from "./card-pay.handler.js";
 
 const ADMIN_CHAT_ID = Number(process.env.ADMIN_CHAT_ID);
-const CARD_NUMBER = process.env.CARD_NUMBER || 0;
-const CARD_OWNER = process.env.CARD_NUMBER || 0;
+
 
 export async function topupAmountHandler(ctx: BotContext, adapter: BotAdapter) {
     const chatId = String(ctx.chatId);
     const amount = parseInt(ctx.text || "0");
+
+    const { cardNumber, cardOwner } = await SettingsService.getCardInfo();
 
     if (isNaN(amount) || amount < 10000) {
         return adapter.sendMessage(
@@ -45,7 +48,7 @@ export async function topupAmountHandler(ctx: BotContext, adapter: BotAdapter) {
             ctx.chatId,
             `✅ درخواست افزایش موجودی به مبلغ ${amount.toLocaleString("fa-IR")} تومان ثبت شد.\n\n` +
             `لطفاً مبلغ را به شماره کارت زیر واریز کرده و <b>عکس رسید</b> آن را حداکثر تا 10 دقیقه در همینجا ارسال کنید:\n\n` +
-            `${CARD_NUMBER}\n ${CARD_OWNER}`,
+            `${cardNumber}\n ${cardOwner}`,
             {
                 reply_markup: {
                     inline_keyboard: [

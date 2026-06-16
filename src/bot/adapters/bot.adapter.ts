@@ -15,4 +15,7 @@ export interface BotAdapter {
         caption?: string,
         options?: SendMessageOptions
     ): Promise<void>;
+
+
+    deleteMessage?(chatId: number, messageId: number): Promise<void>;
 }

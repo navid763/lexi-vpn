@@ -80,4 +80,16 @@ export class TelegramAdapter implements BotAdapter {
             `sendPhoto(chatId=${chatId})`
         );
     }
+
+    async deleteMessage(chatId: number, messageId: number): Promise<void> {
+        await withRetry(
+            () =>
+                axios.post(`${this.baseUrl}/deleteMessage`, {
+                    chat_id: chatId,
+                    message_id: messageId,
+                }),
+            `deleteMessage(chatId=${chatId}, messageId=${messageId})`
+        );
+    }
+
 }

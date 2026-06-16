@@ -49,7 +49,7 @@ export const adminBroadcastSendHandler = async (
 
     for (const chatId of chatIds) {
         try {
-            await adapter.sendMessage(Number(chatId), `📢 <b>پیام از طرف مدیریت:</b>\n\n${text}`);
+            await adapter.sendMessage(Number(chatId), `📢 \n\n${text}`);
             sent++;
         } catch {
             failed++;

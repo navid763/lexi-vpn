@@ -4,6 +4,7 @@ import { prisma } from "../../config/prisma.js";
 import { parseCallbackData } from "../utils/callback-data.js";
 import { RenewalService } from "../../services/renewal.service.js";
 import { getRemainingTime } from "../../utils/date-time.js";
+import { SettingsService } from "../../services/settings.service.js";
 
 const ADMIN_CHAT_ID = Number(process.env.ADMIN_CHAT_ID);
 
@@ -74,8 +75,7 @@ export const renewalWalletHandler = async (ctx: BotContext, adapter: BotAdapter)
 // ── Card payment — creates a renewal order, user sends receipt ────────────
 
 export const renewalCardHandler = async (ctx: BotContext, adapter: BotAdapter) => {
-    const CARD_NUMBER = process.env.CARD_NUMBER || 0;
-    const CARD_OWNER = process.env.CARD_NUMBER || 0;
+    const { cardNumber, cardOwner } = await SettingsService.getCardInfo();
 
     const { id: subscriptionId } = parseCallbackData(ctx.callbackData ?? "");
     if (!subscriptionId) {
@@ -96,7 +96,7 @@ export const renewalCardHandler = async (ctx: BotContext, adapter: BotAdapter) =
             `📦 پلن: ${order.product.name}\n` +
             `💰 مبلغ: <b>${(order.price / 10).toLocaleString()} تومان</b>\n\n` +
             `لطفاً مبلغ را به شماره کارت  💳زیر واریز کرده و رسید را حداکثر ظرف ۱۰ دقیقه ارسال کنید:\n\n` +
-            `${CARD_NUMBER} \n ${CARD_OWNER}`,
+            `${cardNumber} \n ${cardOwner}`,
             {
                 reply_markup: {
                     inline_keyboard: [

@@ -36,6 +36,8 @@ import { adminBroadcastAskHandler } from "../handlers/admin/admin-broadcast.hand
 
 import { renewalOptionsHandler } from "../handlers/renewal.handler.js";
 import { renewalWalletHandler, renewalCardHandler } from "../handlers/renewal-pay.handler.js";
+import { adminEditCardAskHandler } from "../handlers/admin/admin-card.handler.js";
+
 
 export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
     if (!ctx.callbackData) return;
@@ -128,6 +130,9 @@ export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
 
         case "ADMIN_BROADCAST":
             return adminBroadcastAskHandler(ctx, adapter);
+
+        case "ADMIN_EDIT_CARD":
+            return adminEditCardAskHandler(ctx, adapter);
 
         default:
             await adapter.sendMessage(ctx.chatId, "دستور نامعتبر.");
