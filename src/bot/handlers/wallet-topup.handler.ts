@@ -4,6 +4,8 @@ import { prisma } from "../../config/prisma.js";
 import { userSteps } from "../utils/state.js";
 
 const ADMIN_CHAT_ID = Number(process.env.ADMIN_CHAT_ID);
+const CARD_NUMBER = process.env.CARD_NUMBER || 0;
+const CARD_OWNER = process.env.CARD_NUMBER || 0;
 
 export async function topupAmountHandler(ctx: BotContext, adapter: BotAdapter) {
     const chatId = String(ctx.chatId);
@@ -43,7 +45,7 @@ export async function topupAmountHandler(ctx: BotContext, adapter: BotAdapter) {
             ctx.chatId,
             `✅ درخواست افزایش موجودی به مبلغ ${amount.toLocaleString("fa-IR")} تومان ثبت شد.\n\n` +
             `لطفاً مبلغ را به شماره کارت زیر واریز کرده و <b>عکس رسید</b> آن را حداکثر تا 10 دقیقه در همینجا ارسال کنید:\n\n` +
-            `💳 ۶۰۳۷-xxxx-xxxx-xxxx\nبه نام ...`,
+            `${CARD_NUMBER}\n ${CARD_OWNER}`,
             {
                 reply_markup: {
                     inline_keyboard: [

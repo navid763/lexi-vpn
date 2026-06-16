@@ -74,6 +74,9 @@ export const renewalWalletHandler = async (ctx: BotContext, adapter: BotAdapter)
 // ── Card payment — creates a renewal order, user sends receipt ────────────
 
 export const renewalCardHandler = async (ctx: BotContext, adapter: BotAdapter) => {
+    const CARD_NUMBER = process.env.CARD_NUMBER || 0;
+    const CARD_OWNER = process.env.CARD_NUMBER || 0;
+
     const { id: subscriptionId } = parseCallbackData(ctx.callbackData ?? "");
     if (!subscriptionId) {
         return adapter.sendMessage(ctx.chatId, "شناسه اشتراک نامعتبر است.");
@@ -92,8 +95,8 @@ export const renewalCardHandler = async (ctx: BotContext, adapter: BotAdapter) =
             `✅ <b>درخواست تمدید ثبت شد</b>\n\n` +
             `📦 پلن: ${order.product.name}\n` +
             `💰 مبلغ: <b>${(order.price / 10).toLocaleString()} تومان</b>\n\n` +
-            `لطفاً مبلغ را به شماره کارت زیر واریز کرده و رسید را حداکثر ظرف ۱۰ دقیقه ارسال کنید:\n\n` +
-            `💳 1234 **** **** 4321`,
+            `لطفاً مبلغ را به شماره کارت  💳زیر واریز کرده و رسید را حداکثر ظرف ۱۰ دقیقه ارسال کنید:\n\n` +
+            `${CARD_NUMBER} \n ${CARD_OWNER}`,
             {
                 reply_markup: {
                     inline_keyboard: [

@@ -7,6 +7,9 @@ import { OrderService } from "../../services/order.service.js";
 export const cardPayHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     if (!ctx.callbackData) return;
 
+    const CARD_NUMBER = process.env.CARD_NUMBER || 0;
+    const CARD_OWNER = process.env.CARD_NUMBER || 0;
+
     const { id: productId } = parseCallbackData(ctx.callbackData);
     if (!productId) {
         await adapter.sendMessage(ctx.chatId, "سرویس اننتخاب شده نامعتبر است");
@@ -36,7 +39,7 @@ export const cardPayHandler = async (ctx: BotContext, adapter: BotAdapter) => {
 
     await adapter.sendMessage(
         ctx.chatId,
-        `شماره کارت:\n       1234 **** **** 4321`,
+        `شماره کارت:\n<code>${CARD_NUMBER}</code> \n <code>${CARD_OWNER}</code>`, // شماره کارت داخل تگ code قرار گرفت
         {
             reply_markup: {
                 inline_keyboard: [
@@ -50,4 +53,5 @@ export const cardPayHandler = async (ctx: BotContext, adapter: BotAdapter) => {
             },
         }
     );
+
 };
