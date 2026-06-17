@@ -38,6 +38,15 @@ import { renewalOptionsHandler } from "../handlers/renewal.handler.js";
 import { renewalWalletHandler, renewalCardHandler } from "../handlers/renewal-pay.handler.js";
 import { adminEditCardAskHandler } from "../handlers/admin/admin-card.handler.js";
 
+import {
+    adminProductListHandler,
+    adminProductDetailHandler,
+    adminProductToggleHandler,
+    adminProductDeleteHandler,
+    adminProductCreateAskHandler,
+    adminProductEditPriceAskHandler,
+} from "../handlers/admin/admin-product.handler.js";
+
 
 export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
     if (!ctx.callbackData) return;
@@ -133,6 +142,28 @@ export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
 
         case "ADMIN_EDIT_CARD":
             return adminEditCardAskHandler(ctx, adapter);
+
+        // admin modify plans:
+
+        case "ADMIN_PRODUCTS":
+            return adminProductListHandler(ctx, adapter);
+
+        case "ADMIN_PRODUCT_DETAIL":
+            return adminProductDetailHandler(ctx, adapter);
+
+        case "ADMIN_PRODUCT_TOGGLE":
+            return adminProductToggleHandler(ctx, adapter);
+
+        case "ADMIN_PRODUCT_DELETE":
+            return adminProductDeleteHandler(ctx, adapter);
+
+        case "ADMIN_PRODUCT_CREATE":
+            return adminProductCreateAskHandler(ctx, adapter);
+
+        case "ADMIN_PRODUCT_EDIT_PRICE":
+            return adminProductEditPriceAskHandler(ctx, adapter);
+
+
 
         default:
             await adapter.sendMessage(ctx.chatId, "دستور نامعتبر.");

@@ -18,8 +18,9 @@ export const adminMenuHandler = async (ctx: BotContext, adapter: BotAdapter) => 
           [{ text: "📊 آمار کلی", callback_data: "ADMIN_STATS" }],
           [{ text: "🔍 جستجوی کاربر", callback_data: "ADMIN_SEARCH_USER" }],
           [{ text: "📦 جستجوی سفارش", callback_data: "ADMIN_SEARCH_ORDER" }],
-          [{ text: "📢 ارسال پیام همگانی", callback_data: "ADMIN_BROADCAST" }],
+          [{ text: "🛍 مدیریت پلن‌ها", callback_data: "ADMIN_PRODUCTS" }],
           [{ text: "💳 ویرایش اطلاعات کارت", callback_data: "ADMIN_EDIT_CARD" }],
+          [{ text: "📢 ارسال پیام همگانی", callback_data: "ADMIN_BROADCAST" }],
         ],
       },
     }

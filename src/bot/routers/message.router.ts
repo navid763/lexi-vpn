@@ -18,6 +18,12 @@ import {
 
 import { adminEditCardConfirmHandler } from "../handlers/admin/admin-card.handler.js";
 
+import {
+    adminProductCreateConfirmHandler,
+    adminProductEditPriceConfirmHandler,
+} from "../handlers/admin/admin-product.handler.js";
+
+
 export async function messageRouter(ctx: BotContext, adapter: BotAdapter) {
     const chatId = String(ctx.chatId);
     const step = userSteps.get(chatId);
@@ -59,6 +65,18 @@ export async function messageRouter(ctx: BotContext, adapter: BotAdapter) {
             const targetUserId = parseInt(step.split(":")[1]);
             if (!isNaN(targetUserId)) {
                 return adminManualTopupConfirmHandler(ctx, adapter, targetUserId);
+            }
+        }
+
+        if (step === "ADMIN_AWAITING_PRODUCT_DATA") {
+            return adminProductCreateConfirmHandler(ctx, adapter);
+        }
+
+        // ADMIN_AWAITING_PRODUCT_PRICE:{productId} — value contains the target product id
+        if (step?.startsWith("ADMIN_AWAITING_PRODUCT_PRICE:")) {
+            const targetProductId = parseInt(step.split(":")[1]);
+            if (!isNaN(targetProductId)) {
+                return adminProductEditPriceConfirmHandler(ctx, adapter, targetProductId);
             }
         }
     }
