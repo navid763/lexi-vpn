@@ -38,8 +38,10 @@ function buildHttp(): AxiosInstance {
     return axios.create({
         baseURL: env("XUI_PANEL_URL"),
         validateStatus: () => true,
-        timeout: 15000, // تعیین تایم‌اوت مشخص برای جلوگیری از معلق ماندن سوکت
-        // استفاده از مأمورهای شبکه نیتیو برای زنده نگه داشتن اتصال و جلوگیری از ECONNRESET
+
+        // ۱. افزایش زمان تایم‌اوت به ۶۰ ثانیه برای تضمین دریافت پاسخ از سرور ایران
+        timeout: 60000,
+
         httpAgent: new http.Agent({
             keepAlive: true,
             keepAliveMsecs: 4000,
@@ -54,7 +56,10 @@ function buildHttp(): AxiosInstance {
             "Authorization": `Bearer ${env("XUI_API_TOKEN")}`,
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "Connection": "keep-alive" // اصرار به زنده نگه داشتن کانکشن
+
+            // ۲. فعال‌سازی فشرده‌سازی برای کوچک کردن حجم پکت‌های ارسالی آرایه کلاینت‌ها
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive"
         },
     });
 }
@@ -114,9 +119,11 @@ function buildVlessRealityUrl(uuid: string, email: string, reality: RealitySetti
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export class XuiService {
+
+
     /**
-     * Safely adds a client by mutating the inbound schema with network safety wrappers
-     */
+      * Provisions a new client using the correct, native /api/clients/add endpoint.
+      */
     static async addClient(
         trafficLimitBytes: number,
         expiryTimeMs: number,
@@ -125,74 +132,40 @@ export class XuiService {
         const instance = buildHttp();
         const inboundId = Number(env("XUI_INBOUND_ID"));
 
-        // ۱. دریافت وضعیت کنونی اینباند
-        const getRes = await instance.get(`/panel/api/inbounds/get/${inboundId}`);
-        if (!getRes.data?.success || !getRes.data?.obj) {
-            throw new Error(`Failed to fetch inbound state: ${JSON.stringify(getRes.data)}`);
-        }
-
-        const inboundObj = getRes.data.obj;
-
-        let currentSettings: any = {};
-        if (typeof inboundObj.settings === "string") {
-            currentSettings = JSON.parse(inboundObj.settings);
-        } else if (typeof inboundObj.settings === "object") {
-            currentSettings = inboundObj.settings;
-        }
-
-        if (!currentSettings.clients) {
-            currentSettings.clients = [];
-        }
-
-        // ۲. ساخت مشخصات کلاینت جدید
+        // ۱. تولید شناسه‌ها برای دیتابیس لوکال و لینک‌ها
         const uuid = crypto.randomUUID();
         const subId = crypto.randomBytes(8).toString("hex");
         const shortId = crypto.randomBytes(4).toString("hex");
         const email = `${remark.replace(/[^a-zA-Z0-9]/g, "")}_${shortId}`;
 
-        const clientPayload = {
-            id: uuid,
-            email: email,
-            enable: true,
-            expiryTime: typeof expiryTimeMs === "number" ? expiryTimeMs : 0,
-            totalGB: typeof trafficLimitBytes === "number" ? trafficLimitBytes : 0,
-            flow: "xtls-rprx-vision",
-            limitIp: 0,
-            tgId: 0,
-            subId: subId
+        // ۲. ساخت بدنه درخواست دقیقاً مطابق با ساختار مستندات پنل شما
+        const payload = {
+            client: {
+                id: uuid,             // تزریق UUID سفارشی برای سازگاری با دیتابیس شما
+                subId: subId,         // تزریق شناسه سابسکرایبشن سفارشی
+                flow: "xtls-rprx-vision",
+                email: email,
+                totalGB: typeof trafficLimitBytes === "number" ? trafficLimitBytes : 0,
+                expiryTime: typeof expiryTimeMs === "number" ? expiryTimeMs : 0,
+                tgId: 0,
+                limitIp: 0,
+                enable: true
+            },
+            inboundIds: [inboundId]   // آرایه‌ای از آیدی اینباندهایی که کاربر باید به آن‌ها وصل شود
         };
 
-        // ۳. تزریق به کلاینت‌های موجود
-        currentSettings.clients.push(clientPayload);
+        console.log(`[XuiService] Sending compliant client payload to /api/clients/add for: ${email}...`);
 
-        // ۴. بازسازی کامل پکیج بروزرسانی اینباند
-        const updatePayload = {
-            enable: inboundObj.enable,
-            remark: inboundObj.remark,
-            port: inboundObj.port,
-            protocol: inboundObj.protocol,
-            settings: JSON.stringify(currentSettings),
-            streamSettings: typeof inboundObj.streamSettings === "object"
-                ? JSON.stringify(inboundObj.streamSettings)
-                : inboundObj.streamSettings,
-            sniffing: typeof inboundObj.sniffing === "object"
-                ? JSON.stringify(inboundObj.sniffing)
-                : inboundObj.sniffing,
-            expiryTime: inboundObj.expiryTime,
-            total: inboundObj.total
-        };
+        // ۳. ارسال درخواست به اندپونت اصلی
+        const response = await instance.post("/panel/api/clients/add", payload);
 
-        console.log(`[XuiService] Executing network-safe mutation on inbound #${inboundId} for: ${email}...`);
-
-        // ۵. ارسال درخواست با مأمور احراز هویت زنده
-        const updateRes = await instance.post(`/panel/api/inbounds/update/${inboundId}`, updatePayload);
-
-        if (!updateRes.data?.success) {
-            throw new Error(`Inbound mutation failed: ${JSON.stringify(updateRes.data)}`);
+        if (!response.data?.success) {
+            throw new Error(`Direct api/clients/add failed: ${JSON.stringify(response.data)}`);
         }
 
-        console.log("✅ [XuiService] Inbound successfully updated over persistent connection.");
+        console.log("✅ [XuiService] Client successfully created on panel via native clients/add endpoint.");
 
+        // ۴. استخراج تنظیمات ریلیتی برای تولید خروجی‌ها
         const reality = await getRealitySettings();
         const configUrl = buildVlessRealityUrl(uuid, email, reality);
         const subUrl = `${env("XUI_SUB_URL")}/${subId}`;
@@ -200,37 +173,14 @@ export class XuiService {
         return { uuid, email, subId, configUrl, subUrl };
     }
 
-    static async disableClient(uuid: string): Promise<void> {
+    static async disableClient(uuid: string, email: string): Promise<void> {
         const instance = buildHttp();
-        const inboundId = Number(env("XUI_INBOUND_ID"));
-
         try {
-            const getRes = await instance.get(`/panel/api/inbounds/get/${inboundId}`);
-            if (!getRes.data?.success || !getRes.data?.obj) return;
-
-            const inboundObj = getRes.data.obj;
-            let currentSettings = typeof inboundObj.settings === "string" ? JSON.parse(inboundObj.settings) : inboundObj.settings;
-
-            if (currentSettings?.clients) {
-                currentSettings.clients = currentSettings.clients.filter((c: any) => c.id !== uuid);
-
-                const updatePayload = {
-                    enable: inboundObj.enable,
-                    remark: inboundObj.remark,
-                    port: inboundObj.port,
-                    protocol: inboundObj.protocol,
-                    settings: JSON.stringify(currentSettings),
-                    streamSettings: typeof inboundObj.streamSettings === "object" ? JSON.stringify(inboundObj.streamSettings) : inboundObj.streamSettings,
-                    sniffing: typeof inboundObj.sniffing === "object" ? JSON.stringify(inboundObj.sniffing) : inboundObj.sniffing,
-                    expiryTime: inboundObj.expiryTime,
-                    total: inboundObj.total
-                };
-
-                await instance.post(`/panel/api/inbounds/update/${inboundId}`, updatePayload);
-                console.log(`🗑️ [XuiService] Client ${uuid} removed.`);
-            }
+            // استفاده از اندپوینت جدید حذف بر اساس ایمیل کلاینت
+            await instance.post(`/panel/api/clients/del/${email}`);
+            console.log(`🗑️ [XuiService] Client ${email} deleted from all inbounds.`);
         } catch (err) {
-            console.error("[XuiService] disableClient error:", err);
+            console.error("[XuiService] disableClient via email failed:", err);
         }
     }
 
