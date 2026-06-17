@@ -20,7 +20,7 @@ export const getMyRefCodeHandler = async (ctx: BotContext, adapter: BotAdapter) 
 
         await adapter.sendMessage(
             ctx.chatId,
-            `💎 با اشتراک گداری کد زیر، دوستان خود را با ما آشنا کنید. 💎\n\n` +
+            `💎 با اشتراک گذاری کد زیر، دوستان خود را با ما آشنا کنید. 💎\n\n` +
             `با عضویت موفق دوستانتان مقدار 💝 ${(REWARD / 10).toLocaleString()} تومان 💝 به شما تعلق خواهد گرفت.\n\n` +
             `تعداد دعوت موفق شما:  ${referralCount}\n\n` +
             `لینک دعوت شما:`

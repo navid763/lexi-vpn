@@ -42,7 +42,12 @@ export const telegramWebhook = async (req: Request, res: Response) => {
 
         if (ctx.callbackData) {
             if (ctx.messageId) {
-                await adapter.deleteMessage?.(ctx.chatId, ctx.messageId).catch(() => { });
+                await adapter.deleteMessage?.(ctx.chatId, ctx.messageId).catch((err) => {
+                    console.error("Error processing Telegram update:", err);
+                    if (process.env.ADMIN_CHAT_ID) {
+                        adapter.sendMessage(Number(process.env.ADMIN_CHAT_ID), `⚠️ Webhook error: ${(err as any)?.message}`).catch(() => { });
+                    }
+                });
             }
             return callbackRouter(ctx, adapter);
         }
