@@ -41,10 +41,6 @@ export const telegramWebhook = async (req: Request, res: Response) => {
         }
 
         if (ctx.callbackData) {
-            return callbackRouter(ctx, adapter);
-        }
-
-        if (ctx.callbackData) {
             if (ctx.messageId) {
                 await adapter.deleteMessage?.(ctx.chatId, ctx.messageId).catch(() => { });
             }

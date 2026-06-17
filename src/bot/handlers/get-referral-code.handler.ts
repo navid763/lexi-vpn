@@ -28,7 +28,7 @@ export const getMyRefCodeHandler = async (ctx: BotContext, adapter: BotAdapter) 
 
         await adapter.sendMessage(
             ctx.chatId,
-            `https://ble.ir/lexibot?start=${user.referralCode}`
+            `https://t.me/lexi_vpnbot?start=${user.referralCode}`
         );
     } catch (err) {
         console.error("error during getMyRefCodeHandler: ", err);
