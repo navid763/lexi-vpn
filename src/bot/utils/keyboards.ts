@@ -8,6 +8,7 @@ export const mainMenuKeyboards = () => {
             [{ text: "👤 پروفایل من", callback_data: "MY_PROFILE" }],
             [{ text: "💰 اعتبار من", callback_data: "MY_BALANCE" }],
             [{ text: "💝 اعتبار هدیه", callback_data: "GET_MY_REFERRAL" }],
+            [{ text: "📞 پشتیبانی", callback_data: "SUPPORT" }],
         ],
     };
 };

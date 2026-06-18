@@ -89,7 +89,7 @@ export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
             .sendPhoto(
                 ADMIN_CHAT_ID,
                 ctx.photo,
-                `سفارش جدید\nشماره سفارش: ${order.id}\n\nمبلغ سفارش: ${order.price / 10} تومان\nکاربر: ${ctx.chatId}\nتایید؟`,
+                `سفارش جدید\nشماره سفارش: ${order.id}\n\nمبلغ سفارش: ${(order.price / 10).toLocaleString()} تومان\nکاربر: ${ctx.chatId}\nتایید؟`,
                 {
                     reply_markup: {
                         inline_keyboard: [

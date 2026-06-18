@@ -26,11 +26,12 @@ export class ConfigService {
 
         // ── Build parameters for the panel ───────────────────────────────────
 
-        // trafficLimit is stored in MB in the DB (e.g. 10000 = 10 GB).
-        // 3x-ui addClient expects bytes.
-        // FIX: was incorrectly multiplying by 1024^3 (treating MB as GB → ~1000x too large).
-        const trafficLimitBytes = subscription.trafficLimit * 1024 * 1024; // MB → bytes
-
+        // trafficLimit is stored as "GB × 1000" (e.g. 10 GB → 10000).
+        // Convert back to GB, then to bytes using 1024^3 (binary GiB) —
+        // the base 3x-ui/V2Ray clients use when displaying "GB" — so the
+        // quota shown to the user in the VPN client matches what the
+        // admin entered and what the bot displays
+        const trafficLimitBytes = Math.round((subscription.trafficLimit / 1000) * 1024 ** 3);
         const expiryTimeMs = new Date(subscription.expireAt).getTime();
 
         // Friendly label visible in the panel UI

@@ -34,7 +34,7 @@ export const cardPayHandler = async (ctx: BotContext, adapter: BotAdapter) => {
 
     await adapter.sendMessage(
         ctx.chatId,
-        `✅ سفارش ایجاد شد\n\n📦 سرویس: ${product.name}\n💰 مبلغ: ${product.price} تومان\n\nلطفاً رسید پرداخت را حداکثر تا 10 دقیقه ارسال کنید.`
+        `✅ سفارش ایجاد شد\n\n📦 سرویس: ${product.name}\n💰 مبلغ: ${(product.price / 10).toLocaleString()} تومان\n\nلطفاً رسید پرداخت را حداکثر تا 10 دقیقه ارسال کنید.`
     );
 
     await adapter.sendMessage(

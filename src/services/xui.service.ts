@@ -149,6 +149,7 @@ export class XuiService {
                 expiryTime: typeof expiryTimeMs === "number" ? expiryTimeMs : 0,
                 tgId: 0,
                 limitIp: 0,
+                group: "bot",
                 enable: true
             },
             inboundIds: [inboundId]   // آرایه‌ای از آیدی اینباندهایی که کاربر باید به آن‌ها وصل شود
