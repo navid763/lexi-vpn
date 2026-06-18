@@ -8,6 +8,7 @@ import { subscriptionsHandler } from "../handlers/subscriptions.handler.js";
 import { plansHandler } from "../handlers/plans.handler.js";
 import { profileHandler } from "../handlers/profile.handler.js";
 import { adminMenuHandler } from "../handlers/admin/admin-menu.handler.js";
+import { supportHandler } from "../handlers/support.handler.js";
 
 export async function commandRouter(ctx: BotContext, adapter: BotAdapter) {
     if (!ctx.text) return;
@@ -26,6 +27,9 @@ export async function commandRouter(ctx: BotContext, adapter: BotAdapter) {
 
         case "/my_balance":
             return checkWalletBalanceHandler(ctx, adapter);
+
+        case "/support":
+            return supportHandler(ctx, adapter);
 
         case "/my_profile":
             return profileHandler(ctx, adapter);

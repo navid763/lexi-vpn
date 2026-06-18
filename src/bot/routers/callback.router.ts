@@ -17,6 +17,7 @@ import { getMyRefCodeHandler } from "../handlers/get-referral-code.handler.js";
 import { cancellWalletTopUpAmountHandler } from "../handlers/cancel-handlers/cancel-wallet-topup-amount.handler.js";
 import { cancelCardPayHandler } from "../handlers/cancel-handlers/cancel-card-pay.handler.js";
 import { profileHandler } from "../handlers/profile.handler.js";
+import { supportHandler } from "../handlers/support.handler.js";
 
 // Admin handlers
 import { adminMenuHandler } from "../handlers/admin/admin-menu.handler.js";
@@ -107,6 +108,9 @@ export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
 
         case "RENEWAL_CARD":
             return renewalCardHandler(ctx, adapter);
+
+        case "SUPPORT":
+            return supportHandler(ctx, adapter);
 
 
         // ── Admin flows ───────────────────────────────────────────────────────
