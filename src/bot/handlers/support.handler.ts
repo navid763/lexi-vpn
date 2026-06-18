@@ -13,7 +13,7 @@ export const supportHandler = async (ctx: BotContext, adapter: BotAdapter) => {
 <b>💬 راه‌های ارتباطی با ما:</b>
 👤 <b> پشتیبانی:</b> @Lexi_support
 ⏱ <b>ساعات پاسخگویی:</b> ۹ صبح الی ۲ بامداد
-</br>
+
 <i>⚡️ پاسخگویی در سریع‌ترین زمان ممکن انجام می‌شود.</i>
 لطفا صبور باشید 
         `,
