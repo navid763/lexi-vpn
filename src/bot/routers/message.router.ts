@@ -14,6 +14,7 @@ import {
 } from "../handlers/admin/admin-broadcast.handler.js";
 import {
     adminManualTopupConfirmHandler,
+    adminDmSendHandler
 } from "../handlers/admin/admin-user-detail.handler.js";
 
 import { adminEditCardConfirmHandler } from "../handlers/admin/admin-card.handler.js";
@@ -22,6 +23,12 @@ import {
     adminProductCreateConfirmHandler,
     adminProductEditPriceConfirmHandler,
 } from "../handlers/admin/admin-product.handler.js";
+
+import {
+    adminSubExtendConfirmHandler,
+    adminBulkExtendTargetsReceivedHandler,
+    adminBulkExtendApplyHandler
+} from "../handlers/admin/admin-sub-extend.handler.js";
 
 
 export async function messageRouter(ctx: BotContext, adapter: BotAdapter) {
@@ -78,6 +85,22 @@ export async function messageRouter(ctx: BotContext, adapter: BotAdapter) {
             if (!isNaN(targetProductId)) {
                 return adminProductEditPriceConfirmHandler(ctx, adapter, targetProductId);
             }
+        }
+
+        if (step?.startsWith("ADMIN_AWAITING_DM:")) {
+            const targetUserId = parseInt(step.split(":")[1]);
+            if (!isNaN(targetUserId)) return adminDmSendHandler(ctx, adapter, targetUserId);
+        }
+
+        if (step?.startsWith("ADMIN_AWAITING_SUB_EXTEND:")) {
+            const subId = parseInt(step.split(":")[1]);
+            if (!isNaN(subId)) return adminSubExtendConfirmHandler(ctx, adapter, subId);
+        }
+        if (step === "ADMIN_AWAITING_BULK_TARGETS") {
+            return adminBulkExtendTargetsReceivedHandler(ctx, adapter);
+        }
+        if (step === "ADMIN_AWAITING_BULK_AMOUNT") {
+            return adminBulkExtendApplyHandler(ctx, adapter);
         }
     }
 }

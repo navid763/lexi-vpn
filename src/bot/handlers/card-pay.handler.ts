@@ -8,6 +8,10 @@ import { SettingsService } from "../../services/settings.service.js";
 export const cardPayHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     if (!ctx.callbackData) return;
 
+    if (await SettingsService.isMaintenanceMode()) {
+        return adapter.sendMessage(ctx.chatId, "🛠 ربات موقتاً در حال بروزرسانی است. لطفاً کمی بعد دوباره تلاش کنید.");
+    }
+
     const { cardNumber, cardOwner } = await SettingsService.getCardInfo();
 
     const { id: productId } = parseCallbackData(ctx.callbackData);

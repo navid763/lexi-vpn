@@ -5,6 +5,7 @@ import { AdminPanelService } from "../../../services/admin-panel.service.js";
 import { parseCallbackData } from "../../utils/callback-data.js";
 import { userSteps } from "../../utils/state.js";
 import { getRemainingTime } from "../../../utils/date-time.js";
+import { prisma } from "../../../config/prisma.js";
 
 // View user profile
 export const adminUserDetailHandler = async (ctx: BotContext, adapter: BotAdapter) => {
@@ -34,16 +35,37 @@ export const adminUserDetailHandler = async (ctx: BotContext, adapter: BotAdapte
         `👤 نام: ${user.fullName || "—"}\n` +
         `🔖 یوزرنیم: ${user.username ? "@" + user.username : "—"}\n` +
         `💰 موجودی کیف پول: <b>${(user.balance / 10).toLocaleString()} تومان</b>\n` +
+        `وضعیت: ${user.isBlocked ? "🚫 مسدود" : "🟢 فعال"}\n\n` +
         `📅 عضویت: ${user.createdAt.toLocaleDateString("fa-IR")}\n\n` +
         `📦 <b>اشتراک‌های اخیر:</b>\n${subLines}\n\n` +
         `🧾 <b>سفارش‌های اخیر:</b>\n${orderLines}`;
 
+
+    const subActionButtons = user.subscriptions
+        .filter((s) => s.status === "ACTIVE")
+        .flatMap((s) => [
+            [
+                { text: `➕ افزودن روز/حجم #${s.id}`, callback_data: `ADMIN_SUB_EXTEND:${s.id}` },
+                { text: `🚫 لغو #${s.id}`, callback_data: `ADMIN_SUB_CANCEL:${s.id}` },
+            ],
+        ]);
+
+
     await adapter.sendMessage(ctx.chatId, text, {
         reply_markup: {
             inline_keyboard: [
+                ...subActionButtons,
                 [
                     { text: "💳 شارژ دستی کیف پول", callback_data: `ADMIN_MANUAL_TOPUP:${user.id}` },
                 ],
+                [
+                    { text: user.isBlocked ? "✅ رفع مسدودیت" : "🚫 مسدود کردن", callback_data: `ADMIN_USER_BLOCK_TOGGLE:${user.id}` }
+                ],
+
+                [
+                    { text: "✉️ ارسال پیام", callback_data: `ADMIN_DM_USER:${user.id}` },
+                ],
+
                 [
                     { text: "🔍 جستجوی مجدد", callback_data: "ADMIN_SEARCH_USER" },
                     { text: "🔙 منو", callback_data: "ADMIN_MENU" },
@@ -120,4 +142,69 @@ export const adminManualTopupConfirmHandler = async (
             `✅ کیف پول شما توسط مدیریت به مبلغ <b>${amount.toLocaleString()} تومان</b> شارژ شد.\nموجودی فعلی: <b>${(user.balance / 10).toLocaleString()} تومان</b>`
         )
         .catch((e) => console.error("Failed to notify user of manual topup:", e));
+};
+
+
+export const adminUserBlockToggleHandler = async (ctx: BotContext, adapter: BotAdapter) => {
+    if (!(await requireAdmin(ctx, adapter))) return;
+
+    const { id: userId } = parseCallbackData(ctx.callbackData ?? "");
+    if (!userId) return adapter.sendMessage(ctx.chatId, "شناسه کاربر نامعتبر است.");
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return adapter.sendMessage(ctx.chatId, "کاربر پیدا نشد.");
+
+    const updated = await prisma.user.update({
+        where: { id: userId },
+        data: { isBlocked: !user.isBlocked },
+    });
+
+    await adapter.sendMessage(
+        ctx.chatId,
+        updated.isBlocked
+            ? `🚫 کاربر <code>${updated.chatId}</code> مسدود شد.`
+            : `✅ مسدودیت کاربر <code>${updated.chatId}</code> برداشته شد.`,
+        { reply_markup: { inline_keyboard: [[{ text: "🔙 بازگشت", callback_data: `ADMIN_USER_DETAIL:${userId}` }]] } }
+    );
+};
+
+
+
+export const adminDmAskHandler = async (ctx: BotContext, adapter: BotAdapter) => {
+    if (!(await requireAdmin(ctx, adapter))) return;
+
+    const { id: userId } = parseCallbackData(ctx.callbackData ?? "");
+    if (!userId) return adapter.sendMessage(ctx.chatId, "شناسه کاربر نامعتبر است.");
+
+    userSteps.set(String(ctx.chatId), `ADMIN_AWAITING_DM:${userId}`);
+
+    await adapter.sendMessage(ctx.chatId, "✉️ متن پیام را برای ارسال به این کاربر وارد کنید:", {
+        reply_markup: { inline_keyboard: [[{ text: "🔙 انصراف", callback_data: `ADMIN_USER_DETAIL:${userId}` }]] },
+    });
+};
+
+export const adminDmSendHandler = async (
+    ctx: BotContext,
+    adapter: BotAdapter,
+    targetUserId: number
+) => {
+    if (!(await requireAdmin(ctx, adapter))) return;
+
+    userSteps.delete(String(ctx.chatId));
+
+    const text = ctx.text?.trim();
+    if (!text) return adapter.sendMessage(ctx.chatId, "متن پیام خالی است.");
+
+    const user = await prisma.user.findUnique({ where: { id: targetUserId } });
+    if (!user) return adapter.sendMessage(ctx.chatId, "کاربر پیدا نشد.");
+
+    try {
+        await adapter.sendMessage(Number(user.chatId), `📩 <b>پیام از پشتیبانی:</b>\n\n${text}`);
+        await adapter.sendMessage(ctx.chatId, "✅ پیام ارسال شد.", {
+            reply_markup: { inline_keyboard: [[{ text: "🔙 بازگشت", callback_data: `ADMIN_USER_DETAIL:${targetUserId}` }]] },
+        });
+    } catch (err) {
+        console.error("Failed to DM user:", err);
+        await adapter.sendMessage(ctx.chatId, "❌ ارسال ناموفق بود (احتمالاً کاربر ربات را بلاک کرده).");
+    }
 };

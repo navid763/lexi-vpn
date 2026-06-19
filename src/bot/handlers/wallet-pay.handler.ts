@@ -4,11 +4,16 @@ import { parseCallbackData } from "../utils/callback-data.js";
 import { OrderService } from "../../services/order.service.js";
 import { prisma } from "../../config/prisma.js";
 import { approveOrderByWallet } from "../utils/pay-by-wallet.js";
+import { SettingsService } from "../../services/settings.service.js";
 
 const ADMIN_CHAT_ID = Number(process.env.ADMIN_CHAT_ID);
 
 export const walletPayHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     if (!ctx.callbackData) return;
+
+    if (await SettingsService.isMaintenanceMode()) {
+        return adapter.sendMessage(ctx.chatId, "🛠 ربات موقتاً در حال بروزرسانی است. لطفاً کمی بعد دوباره تلاش کنید.");
+    }
 
     const { id: productId } = parseCallbackData(ctx.callbackData);
     if (!productId) {

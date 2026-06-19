@@ -5,6 +5,7 @@ import { commandRouter } from "./routers/command.router.js";
 import { messageRouter } from "./routers/message.router.js";
 import { parseTelegramUpdate } from "./utils/parseTelegramUpdates.js";
 import { checkRateLimit } from "./middlewares/rate-limit.middleware.js";
+import { isUserBlocked } from "./middlewares/block.middleware.js";
 
 const adapter = new TelegramAdapter(process.env.TELEGRAM_BOT_TOKEN!);
 
@@ -36,8 +37,14 @@ export const telegramWebhook = async (req: Request, res: Response) => {
             return;
         }
 
+        if (!isAdmin && await isUserBlocked(ctx.chatId)) {
+            await adapter.sendMessage(ctx.chatId, "🚫 شما توسط مدیریت مسدود شده‌اید و امکان استفاده از ربات را ندارید.")
+                .catch(() => { });
+            return;
+        }
+
         if (ctx.text?.startsWith("/")) {
-            return commandRouter(ctx, adapter);
+            return await commandRouter(ctx, adapter);
         }
 
         if (ctx.callbackData) {
@@ -49,10 +56,10 @@ export const telegramWebhook = async (req: Request, res: Response) => {
                     }
                 });
             }
-            return callbackRouter(ctx, adapter);
+            return await callbackRouter(ctx, adapter);
         }
 
-        return messageRouter(ctx, adapter);
+        return await messageRouter(ctx, adapter);
 
     } catch (err) {
         console.error("Error processing Telegram update:", err);

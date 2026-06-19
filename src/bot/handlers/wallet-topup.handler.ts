@@ -3,12 +3,16 @@ import type { BotContext } from "../types/bot.context.js";
 import { prisma } from "../../config/prisma.js";
 import { userSteps } from "../utils/state.js";
 import { SettingsService } from "../../services/settings.service.js";
-import { cardPayHandler } from "./card-pay.handler.js";
 
 const ADMIN_CHAT_ID = Number(process.env.ADMIN_CHAT_ID);
 
 
 export async function topupAmountHandler(ctx: BotContext, adapter: BotAdapter) {
+
+    if (await SettingsService.isMaintenanceMode()) {
+        return adapter.sendMessage(ctx.chatId, "🛠 ربات موقتاً در حال بروزرسانی است. لطفاً کمی بعد دوباره تلاش کنید.");
+    }
+
     const chatId = String(ctx.chatId);
     const amount = parseInt(ctx.text || "0");
 

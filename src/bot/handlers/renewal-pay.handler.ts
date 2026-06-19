@@ -11,6 +11,11 @@ const ADMIN_CHAT_ID = Number(process.env.ADMIN_CHAT_ID);
 // ── Wallet payment — instant ──────────────────────────────────────────────
 
 export const renewalWalletHandler = async (ctx: BotContext, adapter: BotAdapter) => {
+
+    if (await SettingsService.isMaintenanceMode()) {
+        return adapter.sendMessage(ctx.chatId, "🛠 ربات موقتاً در حال بروزرسانی است. لطفاً کمی بعد دوباره تلاش کنید.");
+    }
+
     const { id: subscriptionId } = parseCallbackData(ctx.callbackData ?? "");
     if (!subscriptionId) {
         return adapter.sendMessage(ctx.chatId, "شناسه اشتراک نامعتبر است.");
@@ -75,6 +80,11 @@ export const renewalWalletHandler = async (ctx: BotContext, adapter: BotAdapter)
 // ── Card payment — creates a renewal order, user sends receipt ────────────
 
 export const renewalCardHandler = async (ctx: BotContext, adapter: BotAdapter) => {
+
+    if (await SettingsService.isMaintenanceMode()) {
+        return adapter.sendMessage(ctx.chatId, "🛠 ربات موقتاً در حال بروزرسانی است. لطفاً کمی بعد دوباره تلاش کنید.");
+    }
+
     const { cardNumber, cardOwner } = await SettingsService.getCardInfo();
 
     const { id: subscriptionId } = parseCallbackData(ctx.callbackData ?? "");

@@ -6,6 +6,8 @@ interface CardInfo {
 }
 
 let cachedCardInfo: CardInfo | null = null;
+let cachedMaintenanceMode: boolean | null = null;
+
 
 export class SettingsService {
     static async get(key: string): Promise<string | null> {
@@ -40,4 +42,19 @@ export class SettingsService {
 
         return cachedCardInfo;
     }
+
+
+    // inside SettingsService class:
+    static async isMaintenanceMode(): Promise<boolean> {
+        if (cachedMaintenanceMode !== null) return cachedMaintenanceMode;
+        const value = await this.get("MAINTENANCE_MODE");
+        cachedMaintenanceMode = value === "true";
+        return cachedMaintenanceMode;
+    }
+
+    static async setMaintenanceMode(enabled: boolean): Promise<void> {
+        await this.set("MAINTENANCE_MODE", enabled ? "true" : "false");
+        cachedMaintenanceMode = enabled;
+    }
+
 }

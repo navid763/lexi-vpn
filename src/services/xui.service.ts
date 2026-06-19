@@ -24,6 +24,16 @@ interface RealitySettings {
     spiderX: string;
 }
 
+export interface BulkAdjustSkip {
+    email: string;
+    reason: string;
+}
+
+export interface BulkAdjustResult {
+    adjusted: number;
+    skipped: BulkAdjustSkip[];
+}
+
 let cachedReality: RealitySettings | null = null;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -39,8 +49,7 @@ function buildHttp(): AxiosInstance {
         baseURL: env("XUI_PANEL_URL"),
         validateStatus: () => true,
 
-        // ۱. افزایش زمان تایم‌اوت به ۶۰ ثانیه برای تضمین دریافت پاسخ از سرور ایران
-        timeout: 60000,
+        timeout: 10000,
 
         httpAgent: new http.Agent({
             keepAlive: true,
@@ -183,6 +192,29 @@ export class XuiService {
         } catch (err) {
             console.error("[XuiService] disableClient via email failed:", err);
         }
+    }
+
+
+
+    static async bulkAdjustClients(
+        emails: string[],
+        addDays: number,
+        addBytes: number
+    ): Promise<BulkAdjustResult> {
+        if (!emails.length) return { adjusted: 0, skipped: [] };
+
+        const instance = buildHttp();
+        const response = await instance.post("/panel/api/clients/bulkAdjust", {
+            emails,
+            addDays,
+            addBytes,
+        });
+
+        if (!response.data?.success) {
+            throw new Error(`bulkAdjust failed: ${JSON.stringify(response.data)}`);
+        }
+
+        return response.data.obj;
     }
 
     static async warmup(): Promise<void> {

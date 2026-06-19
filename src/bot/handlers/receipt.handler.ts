@@ -23,6 +23,7 @@ export async function receiptHandler(ctx: BotContext, adapter: BotAdapter) {
             createdAt: { gte: tenMinutesAgo },
             deletedAt: null,
         },
+        orderBy: { createdAt: "desc" }
     });
 
     if (!order) {

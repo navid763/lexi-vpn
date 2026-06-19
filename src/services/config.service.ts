@@ -48,6 +48,7 @@ export class ConfigService {
                 uuid: xuiResult.uuid,
                 configUrl: xuiResult.configUrl,
                 subUrl: xuiResult.subUrl,
+                clientEmail: xuiResult.email
             },
         });
 

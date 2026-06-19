@@ -18,6 +18,7 @@ model User {
   balance        Int           @default(0)
   referralCode   String        @unique @map("referral_code")
   invitedById    Int?          @map("invited_by")
+  isBlocked Boolean @default(false) @map("is_blocked")
 
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
@@ -170,7 +171,8 @@ model Config {
   subscriptionId Int          @unique @map("subscription_id")
   uuid           String
   configUrl      String       @map("config_url")
-  subUrl         String?      @map("sub_url")        // ← add this
+  subUrl         String?      @map("sub_url")        
+  clientEmail String? @map("client_email")
 
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")

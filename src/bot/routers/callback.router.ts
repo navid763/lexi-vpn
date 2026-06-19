@@ -26,6 +26,8 @@ import { adminSearchUserHandler } from "../handlers/admin/admin-search-user.hand
 import {
     adminUserDetailHandler,
     adminManualTopupAskHandler,
+    adminUserBlockToggleHandler,
+    adminDmAskHandler,
 } from "../handlers/admin/admin-user-detail.handler.js";
 import {
     adminSearchOrderHandler,
@@ -47,6 +49,17 @@ import {
     adminProductCreateAskHandler,
     adminProductEditPriceAskHandler,
 } from "../handlers/admin/admin-product.handler.js";
+
+import {
+    adminSubCancelAskHandler,
+    adminSubCancelConfirmHandler
+} from "../handlers/admin/admin-subscription.handler.js";
+
+import { adminMaintenanceToggleHandler } from "../handlers/admin/admin-maintenance-toggle.handler.js";
+import {
+    adminSubExtendAskHandler,
+    adminBulkExtendAskTargetsHandler
+} from "../handlers/admin/admin-sub-extend.handler.js";
 
 
 export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
@@ -167,6 +180,26 @@ export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
         case "ADMIN_PRODUCT_EDIT_PRICE":
             return adminProductEditPriceAskHandler(ctx, adapter);
 
+        case "ADMIN_USER_BLOCK_TOGGLE":
+            return adminUserBlockToggleHandler(ctx, adapter);
+
+        case "ADMIN_DM_USER":
+            return adminDmAskHandler(ctx, adapter);
+
+        case "ADMIN_SUB_CANCEL":
+            return adminSubCancelAskHandler(ctx, adapter);
+
+        case "ADMIN_SUB_CANCEL_CONFIRM":
+            return adminSubCancelConfirmHandler(ctx, adapter);
+
+        case "ADMIN_MAINTENANCE_TOGGLE":
+            return adminMaintenanceToggleHandler(ctx, adapter);
+
+        case "ADMIN_SUB_EXTEND":
+            return adminSubExtendAskHandler(ctx, adapter);
+
+        case "ADMIN_BULK_EXTEND":
+            return adminBulkExtendAskTargetsHandler(ctx, adapter);
 
 
         default:
