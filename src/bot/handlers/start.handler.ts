@@ -22,7 +22,7 @@ export const startHandler = async (ctx: BotContext, adapter: BotAdapter) => {
 
     await adapter.sendMessage(
         ctx.chatId,
-        "یکی از گزینه های زیر را انتخاب کنید  🚀",
+        `👋 <b>به Lexi VPN خوش آمدید</b>\n\nیکی از گزینه‌های زیر را انتخاب کنید:`,
         {
             reply_markup: mainMenuKeyboards()
         }

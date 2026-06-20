@@ -33,7 +33,7 @@ export const subscriptionsHandler = async (ctx: BotContext, adapter: BotAdapter)
         );
         return;
     }
-
+    //
     // For each subscription we need the *current* state of its product
     // (price may have changed, product may have been deactivated since purchase).
     const productIds = [...new Set(subscriptions.map((s) => s.order.product.id))];

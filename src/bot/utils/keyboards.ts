@@ -3,12 +3,18 @@ import type { Product } from "@prisma/client";
 export const mainMenuKeyboards = () => {
     return {
         inline_keyboard: [
-            [{ text: "📦 سرویس های موجود", callback_data: "PLANS" }],
-            [{ text: "🔐 سرویس‌های من", callback_data: "MY_SERVICES" }],
-            [{ text: "👤 پروفایل من", callback_data: "MY_PROFILE" }],
-            [{ text: "💰 اعتبار من", callback_data: "MY_BALANCE" }],
-            [{ text: "💝 اعتبار هدیه", callback_data: "GET_MY_REFERRAL" }],
-            [{ text: "📞 پشتیبانی", callback_data: "SUPPORT" }],
+            [
+                { text: "📦 سرویس‌های موجود", callback_data: "PLANS" },
+                { text: "🔐 سرویس‌های من", callback_data: "MY_SERVICES" },
+            ],
+            [
+                { text: "👤 پروفایل من", callback_data: "MY_PROFILE" },
+                { text: "💰 اعتبار من", callback_data: "MY_BALANCE" },
+            ],
+            [
+                { text: "💝 اعتبار هدیه", callback_data: "GET_MY_REFERRAL" },
+                { text: "📞 پشتیبانی", callback_data: "SUPPORT" },
+            ],
         ],
     };
 };
