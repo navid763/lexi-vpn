@@ -27,6 +27,9 @@ model User {
   referrer       User?         @relation("Referrals", fields: [invitedById], references: [id])
   referrals      User[]        @relation("Referrals")
 
+  joinedViaId    Int?      @map("joined_via_id")
+  joinedVia      JoinLink? @relation(fields: [joinedViaId], references: [id])
+
   orders         Order[]
   payments       Payment[]
   subscriptions  Subscription[]
@@ -193,4 +196,15 @@ model Setting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("settings")
+}
+
+model JoinLink {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  label     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users     User[]
+
+  @@map("join_links")
 }

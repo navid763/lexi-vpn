@@ -61,6 +61,11 @@ import {
     adminBulkExtendAskTargetsHandler
 } from "../handlers/admin/admin-sub-extend.handler.js";
 
+import {
+    adminAdLinkListHandler,
+    adminAdLinkCreateAskHandler,
+} from "../handlers/admin/admin-ad-links.handler.js";
+
 
 export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
     if (!ctx.callbackData) return;
@@ -200,6 +205,12 @@ export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
 
         case "ADMIN_BULK_EXTEND":
             return adminBulkExtendAskTargetsHandler(ctx, adapter);
+
+        case "ADMIN_AD_LINKS":
+            return adminAdLinkListHandler(ctx, adapter);
+
+        case "ADMIN_AD_LINK_CREATE":
+            return adminAdLinkCreateAskHandler(ctx, adapter);
 
 
         default:

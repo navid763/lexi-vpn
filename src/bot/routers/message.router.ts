@@ -30,6 +30,8 @@ import {
     adminBulkExtendApplyHandler
 } from "../handlers/admin/admin-sub-extend.handler.js";
 
+import { adminAdLinkCreateConfirmHandler } from "../handlers/admin/admin-ad-links.handler.js";
+
 
 export async function messageRouter(ctx: BotContext, adapter: BotAdapter) {
     const chatId = String(ctx.chatId);
@@ -65,6 +67,10 @@ export async function messageRouter(ctx: BotContext, adapter: BotAdapter) {
 
         if (step === "ADMIN_AWAITING_CARD_INFO") {
             return adminEditCardConfirmHandler(ctx, adapter);
+        }
+
+        if (step === "ADMIN_AWAITING_AD_LINK_LABEL") {
+            return adminAdLinkCreateConfirmHandler(ctx, adapter);
         }
 
         // ADMIN_AWAITING_TOPUP_AMOUNT:{userId} — value contains the target user id

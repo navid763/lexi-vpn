@@ -13,7 +13,7 @@ export class UserService {
         messenger: "telegram" | "bale",
         fullName?: string,
         username?: string,
-        referralPayload?: string
+        startPayload?: string // either a referral code (REF-...) or an ad link code (AD-...)
     ) {
         let user = await prisma.user.findUnique({
             where: { chatId: String(chatId) },
@@ -23,14 +23,17 @@ export class UserService {
 
         if (!user) {
             const newReferralCode = `REF-${generateUniqueCode()}`;
+            const isReferral = startPayload?.startsWith("REF-");
+            const isAdLink = startPayload?.startsWith("AD-");
 
             const result = await prisma.$transaction(async (tx) => {
                 let invitedById: number | undefined;
+                let joinedViaId: number | undefined;
                 let rewardInfo: { rewardOwnerChatId: string; reward: number } | null = null;
 
-                if (referralPayload) {
+                if (isReferral) {
                     const referrer = await tx.user.findUnique({
-                        where: { referralCode: referralPayload },
+                        where: { referralCode: startPayload },
                     });
 
                     if (referrer) {
@@ -46,6 +49,11 @@ export class UserService {
                             reward: REWARD,
                         };
                     }
+                } else if (isAdLink) {
+                    const link = await tx.joinLink.findUnique({
+                        where: { code: startPayload },
+                    });
+                    if (link) invitedById = undefined, joinedViaId = link.id;
                 }
 
                 const newUser = await tx.user.create({
@@ -57,6 +65,7 @@ export class UserService {
                         referralCode: newReferralCode,
                         balance: 0,
                         invitedById: invitedById ?? null,
+                        joinedViaId: joinedViaId ?? null,
                     },
                 });
 
@@ -66,7 +75,6 @@ export class UserService {
             user = result.newUser;
             rewardOptions = result.rewardInfo;
         } else {
-            // Existing user: sync profile fields if they changed.
             const updates: Record<string, string | undefined> = {};
             if (user.fullName !== fullName) updates.fullName = fullName;
             if (user.username !== username) updates.username = username;
