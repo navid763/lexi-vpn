@@ -15,6 +15,9 @@ export const mainMenuKeyboards = () => {
                 { text: "💝 اعتبار هدیه", callback_data: "GET_MY_REFERRAL" },
                 { text: "📞 پشتیبانی", callback_data: "SUPPORT" },
             ],
+            [
+                { text: "📚 آموزش و راهنمایی", callback_data: "QA" }
+            ],
         ],
     };
 };

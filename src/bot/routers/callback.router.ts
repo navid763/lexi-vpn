@@ -18,6 +18,7 @@ import { cancellWalletTopUpAmountHandler } from "../handlers/cancel-handlers/can
 import { cancelCardPayHandler } from "../handlers/cancel-handlers/cancel-card-pay.handler.js";
 import { profileHandler } from "../handlers/profile.handler.js";
 import { supportHandler } from "../handlers/support.handler.js";
+import { qaHandler } from "../handlers/Q-A.handler.js";
 
 // Admin handlers
 import { adminMenuHandler } from "../handlers/admin/admin-menu.handler.js";
@@ -129,6 +130,9 @@ export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
 
         case "SUPPORT":
             return supportHandler(ctx, adapter);
+
+        case "QA":
+            return qaHandler(ctx, adapter);
 
 
         // ── Admin flows ───────────────────────────────────────────────────────

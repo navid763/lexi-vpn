@@ -1,7 +1,5 @@
 import type { BotAdapter } from "../adapters/bot.adapter.js";
 import type { BotContext } from "../types/bot.context.js";
-import { prisma } from "../../config/prisma.js";
-import { productsKeyboard } from "../utils/keyboards.js";
 
 export const supportHandler = async (ctx: BotContext, adapter: BotAdapter) => {
 
