@@ -30,6 +30,8 @@ model User {
   joinedViaId    Int?      @map("joined_via_id")
   joinedVia      JoinLink? @relation(fields: [joinedViaId], references: [id])
 
+  testTrials     TestTrial[]
+
   orders         Order[]
   payments       Payment[]
   subscriptions  Subscription[]
@@ -207,4 +209,20 @@ model JoinLink {
   users     User[]
 
   @@map("join_links")
+}
+
+
+model TestTrial {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  uuid        String
+  configUrl   String   @map("config_url")
+  subUrl      String?  @map("sub_url")
+  clientEmail String?  @map("client_email")
+  expireAt    DateTime @map("expire_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("test_trials")
 }

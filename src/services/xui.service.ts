@@ -136,7 +136,8 @@ export class XuiService {
     static async addClient(
         trafficLimitBytes: number,
         expiryTimeMs: number,
-        remark: string
+        remark: string,
+        clientGroup = "bot"
     ): Promise<XuiClientResult> {
         const instance = buildHttp();
         const inboundId = Number(env("XUI_INBOUND_ID"));
@@ -158,7 +159,7 @@ export class XuiService {
                 expiryTime: typeof expiryTimeMs === "number" ? expiryTimeMs : 0,
                 tgId: 0,
                 limitIp: 0,
-                group: "bot",
+                group: clientGroup,
                 enable: true
             },
             inboundIds: [inboundId]   // آرایه‌ای از آیدی اینباندهایی که کاربر باید به آن‌ها وصل شود

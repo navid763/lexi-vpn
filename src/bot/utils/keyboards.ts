@@ -4,6 +4,9 @@ export const mainMenuKeyboards = () => {
     return {
         inline_keyboard: [
             [
+                { text: "🧪 دریافت تست رایگان", callback_data: "TEST_CONFIG" }
+            ],
+            [
                 { text: "📦 سرویس‌های موجود", callback_data: "PLANS" },
                 { text: "🔐 سرویس‌های من", callback_data: "MY_SERVICES" },
             ],

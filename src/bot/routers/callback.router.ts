@@ -19,6 +19,7 @@ import { cancelCardPayHandler } from "../handlers/cancel-handlers/cancel-card-pa
 import { profileHandler } from "../handlers/profile.handler.js";
 import { supportHandler } from "../handlers/support.handler.js";
 import { qaHandler } from "../handlers/Q-A.handler.js";
+import { testConfigHandler } from "../handlers/test-config.handler.js";
 
 // Admin handlers
 import { adminMenuHandler } from "../handlers/admin/admin-menu.handler.js";
@@ -133,6 +134,9 @@ export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
 
         case "QA":
             return qaHandler(ctx, adapter);
+
+        case "TEST_CONFIG":
+            return testConfigHandler(ctx, adapter);
 
 
         // ── Admin flows ───────────────────────────────────────────────────────
