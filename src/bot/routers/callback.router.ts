@@ -68,6 +68,8 @@ import {
     adminAdLinkCreateAskHandler,
 } from "../handlers/admin/admin-ad-links.handler.js";
 
+import { adminEditReferralRewardAskHandler } from "../handlers/admin/admin-referral-reward.handler.js";
+
 
 export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
     if (!ctx.callbackData) return;
@@ -220,6 +222,8 @@ export async function callbackRouter(ctx: BotContext, adapter: BotAdapter) {
         case "ADMIN_AD_LINK_CREATE":
             return adminAdLinkCreateAskHandler(ctx, adapter);
 
+        case "ADMIN_EDIT_REFERRAL_REWARD":
+            return adminEditReferralRewardAskHandler(ctx, adapter);
 
         default:
             await adapter.sendMessage(ctx.chatId, "دستور نامعتبر.");

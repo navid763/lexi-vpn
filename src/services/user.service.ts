@@ -1,11 +1,12 @@
 import { prisma } from "../config/prisma.js";
 import * as crypto from "crypto";
+import { SettingsService } from "./settings.service.js";
+
 
 function generateUniqueCode(): string {
     return crypto.randomBytes(4).toString("hex").toUpperCase();
 }
 
-const REWARD = Number(process.env.REFFERAL_REWARD) || 0; // Rials
 
 export class UserService {
     static async getOrCreateUser(
@@ -25,6 +26,9 @@ export class UserService {
             const newReferralCode = `REF-${generateUniqueCode()}`;
             const isReferral = startPayload?.startsWith("REF-");
             const isAdLink = startPayload?.startsWith("AD-");
+
+            const REWARD = isReferral ? (await SettingsService.getReferralReward() ?? 0) : 0;
+
 
             const result = await prisma.$transaction(async (tx) => {
                 let invitedById: number | undefined;

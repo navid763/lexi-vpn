@@ -21,7 +21,10 @@ export const adminMenuHandler = async (ctx: BotContext, adapter: BotAdapter) => 
             { text: "📦 جستجوی سفارش", callback_data: "ADMIN_SEARCH_ORDER" }
           ],
           [{ text: "🛍 مدیریت پلن‌ها", callback_data: "ADMIN_PRODUCTS" }],
-          [{ text: "💳 ویرایش اطلاعات کارت", callback_data: "ADMIN_EDIT_CARD" }],
+          [
+            { text: "💳 ویرایش اطلاعات کارت", callback_data: "ADMIN_EDIT_CARD" },
+            { text: "💝 ویرایش مبلغ پاداش دعوت", callback_data: "ADMIN_EDIT_REFERRAL_REWARD" }
+          ],
           [{ text: "📦 افزودن گروهی روز/حجم", callback_data: "ADMIN_BULK_EXTEND" }],
           [{ text: "🔗 لینک‌های تبلیغاتی", callback_data: "ADMIN_AD_LINKS" }],
           [{ text: "📢 ارسال پیام همگانی", callback_data: "ADMIN_BROADCAST" }],

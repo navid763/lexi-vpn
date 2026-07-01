@@ -7,6 +7,7 @@ interface CardInfo {
 
 let cachedCardInfo: CardInfo | null = null;
 let cachedMaintenanceMode: boolean | null = null;
+let cachedReferralReward: number | null = null;
 
 
 export class SettingsService {
@@ -24,6 +25,9 @@ export class SettingsService {
 
         if (key === "CARD_NUMBER" || key === "CARD_OWNER") {
             cachedCardInfo = null; // invalidate cache on change
+        }
+        if (key === "REFERRAL_REWARD") {
+            cachedReferralReward = null;
         }
     }
 
@@ -50,6 +54,18 @@ export class SettingsService {
         const value = await this.get("MAINTENANCE_MODE");
         cachedMaintenanceMode = value === "true";
         return cachedMaintenanceMode;
+    }
+
+    static async getReferralReward(): Promise<number> {
+        if (cachedReferralReward !== null) return cachedReferralReward;
+        const value = await this.get("REFERRAL_REWARD");
+        cachedReferralReward = value ? parseInt(value) : 0;
+        return cachedReferralReward;
+    }
+
+    static async setReferralReward(amountRial: number): Promise<void> {
+        await this.set("REFERRAL_REWARD", String(amountRial));
+        cachedReferralReward = amountRial;
     }
 
     static async setMaintenanceMode(enabled: boolean): Promise<void> {

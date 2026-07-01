@@ -31,7 +31,7 @@ import {
 } from "../handlers/admin/admin-sub-extend.handler.js";
 
 import { adminAdLinkCreateConfirmHandler } from "../handlers/admin/admin-ad-links.handler.js";
-
+import { adminEditReferralRewardConfirmHandler } from "../handlers/admin/admin-referral-reward.handler.js";
 
 export async function messageRouter(ctx: BotContext, adapter: BotAdapter) {
     const chatId = String(ctx.chatId);
@@ -108,5 +108,10 @@ export async function messageRouter(ctx: BotContext, adapter: BotAdapter) {
         if (step === "ADMIN_AWAITING_BULK_AMOUNT") {
             return adminBulkExtendApplyHandler(ctx, adapter);
         }
+
+        if (step === "ADMIN_AWAITING_REFERRAL_REWARD") {
+            return adminEditReferralRewardConfirmHandler(ctx, adapter);
+        }
+
     }
 }

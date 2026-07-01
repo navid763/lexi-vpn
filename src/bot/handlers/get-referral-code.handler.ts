@@ -1,8 +1,8 @@
 import type { BotAdapter } from "../adapters/bot.adapter.js";
 import type { BotContext } from "../types/bot.context.js";
 import { prisma } from "../../config/prisma.js";
+import { SettingsService } from "../../services/settings.service.js";
 
-const REWARD = Number(process.env.REFFERAL_REWARD) || 0;
 
 export const getMyRefCodeHandler = async (ctx: BotContext, adapter: BotAdapter) => {
     try {
@@ -17,6 +17,8 @@ export const getMyRefCodeHandler = async (ctx: BotContext, adapter: BotAdapter) 
         const referralCount = await prisma.user.count({
             where: { invitedById: user.id },
         });
+
+        const REWARD = await SettingsService.getReferralReward() ?? 0;
 
         await adapter.sendMessage(
             ctx.chatId,
